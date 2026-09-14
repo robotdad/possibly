@@ -92,6 +92,23 @@ architecture or pretending prototype code is production-ready.
   person to explain the experience again.
 - A caller uses the same method on unrelated ideas without bespoke art direction.
 
+### An illustrative right-and-wrong example
+
+A conversation describes an app for coordinating community-garden watering shifts.
+It supplies the task, not a prescribed interface.
+
+**Right:** Visual directions show people claiming calendar slots versus supplying
+availability and reviewing proposed assignments. The screens reveal the difference
+between direct choice and coordinated matching, giving the person a useful decision.
+
+**Wrong:** Three differently colored versions of the same calendar flow are presented
+as three different task approaches. These are valid branding alternatives, but
+calling them different experiences misrepresents what the person is choosing.
+
+This is an illustration of intent, not an observed result or an executed conformance
+fixture. The checkable promises live in [the exploration contract](../contracts/exploration.v1.md);
+this example alone does not establish readiness to lock.
+
 ## Changelog
 
 - **2026-09-14** — First draft from the captured working direction; not ratified.
