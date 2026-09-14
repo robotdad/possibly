@@ -22,21 +22,13 @@ replaces it with a conventional layout. This promise keeps the selected experien
 recognizable while allowing intentional changes. It does not freeze prototype code
 or dictate how the real app is engineered.
 
-## Illustrative right and wrong — clauses 1–2
-
-**Same input:** The person selects a calendar-first watering-shift direction and
-asks for the typography and imagery of a supplied reference while retaining
-direct shift claiming.
-
-**Right:** The reference's typography and imagery are reflected in the refinement.
-People still browse calendar slots and claim their chosen shift directly.
-
-**Wrong:** The refinement adopts the requested visual treatment but silently
-replaces direct claiming with automatic assignments. Visual similarity does not
-compensate for losing the interaction the person explicitly asked to preserve.
-
-This pair illustrates the promises, not observed results or an executed fixture.
-It does not prohibit requested interaction changes or establish lock readiness.
+For example, someone choosing a calendar-first watering-shift app may ask for the
+typography and imagery of a supplied reference while keeping direct shift claiming.
+A useful refinement adopts that visual treatment and still lets people browse
+slots and claim their chosen shift. One that silently replaces claiming with
+automatic assignments loses the selected experience, however closely it matches
+the reference's appearance. The distinction is between a requested change and an
+unrequested replacement, not a prohibition on changing the interaction.
 
 ## Core (the teeth)
 

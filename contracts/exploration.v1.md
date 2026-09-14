@@ -21,21 +21,12 @@ The person should not have to write a polished prompt or design every alternativ
 Without this promise, generation can invent requirements or present decorative
 variations as meaningful choice. The output makes exploration inspectable.
 
-## Illustrative right and wrong — clauses 4–5
-
-**Same input:** A conversation describes coordinating community-garden watering
-shifts, without prescribing an interface.
-
-**Right:** One visual sequence shows people claiming calendar slots; another shows
-people supplying availability and reviewing proposed assignments. The screens
-make direct choice versus coordinated matching visible, with a practical tradeoff.
-
-**Wrong:** Differently styled copies of the same calendar flow are presented as
-different task approaches. Those copies are valid branding exploration, but not
-the experience alternatives claimed here. Different labels alone do not fix this.
-
-This pair illustrates the promises, not observed results or an executed fixture.
-It does not prescribe these approaches for other apps or establish lock readiness.
+For a watering-shift app, choosing between claiming calendar slots and supplying
+availability for proposed assignments changes how people accomplish the task.
+The visual sequences make that tradeoff visible. Choosing between differently
+styled calendars explores branding instead. Both can be useful, but presenting
+the latter as different task approaches obscures the choice rather than helping
+someone make it.
 
 ## Core (the teeth)
 
