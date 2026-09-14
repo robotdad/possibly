@@ -23,13 +23,25 @@ The person compares lightweight mockups before investing in a click-through,
 a rough interactive approximation of a selected direction. Look and feel belong
 in the exploration too: “this one, but more like that reference” is a useful
 instruction. The person can refine an approach without losing what they liked,
-or return to another direction when trying it changes their mind.
+or return to another direction when trying it changes their mind. Visual review
+also tests the tool's interpreted brief. When it reveals omitted or misunderstood
+intent and the correction is accepted, the identified brief revision and all
+affected current directions or artifacts are updated or visibly superseded.
 
 Possibly is an Amplifier-powered smart tool: a capability another agent application
 can call without requiring its users to adopt an Amplifier app or load its internal
 agents. The calling app supplies context and presents results; the person chooses
 the experience; a separate development process builds the real app and backend.
-Mockup delivery is not confined to HTML.
+The tool makes accepted corrections and important changes visible to that caller
+and to handoff consumers, but neither edits nor approves the caller's own vision
+or contracts. The caller decides adoption through its own process.
+
+The initial POC delivers one self-contained HTML mockup file that opens directly
+in a browser, with no network, server, build or companion files needed to try it.
+Optional explainers and decision materials may accompany it. Broader mockup
+formats are deferred. This is the delivered mockup, not a requirement that the
+smart tool or live dashboard be single-file or offline. Trying the standalone
+mockup does not itself submit decisions to the caller.
 
 The selected experience and its decision record connect exploration to development.
 They distinguish intended interaction from fake behavior and unresolved assumptions,
@@ -63,14 +75,19 @@ does not silently discard the chosen visual direction.
 
 ### 5. **Approximation serves learning.**
 
-Mockups are detailed enough to judge and cheap enough to revise. Fake data and
-behavior are visible as such; visual polish is not evidence of functioning software.
+Mockups are detailed enough for the question being asked and cheap enough to
+revise. A lean flow review and a legitimate visual or branding review call for
+different representations and fidelity; neither requires wireframes everywhere.
+Fake data and behavior are visible as such; visual polish is not evidence of
+functioning software.
 
 ### 6. **The experience survives its rendering and its handoff.**
 
-HTML is one expression, not the product boundary. A downstream process receives
-the choices and uncertainties it needs, without inheriting a mandated production
-architecture or pretending prototype code is production-ready.
+For the initial POC, a standalone self-contained HTML file is the delivered
+mockup, not the product boundary. A downstream process receives the current,
+corrected intent, important changes, choices and uncertainties it needs, without
+inheriting a mandated production architecture or pretending prototype code is
+production-ready.
 
 ## What this deliberately resists
 
@@ -84,6 +101,8 @@ architecture or pretending prototype code is production-ready.
 
 - A person identifies a useful experience choice they had not already specified.
 - A person understands the alternatives from their visuals, not a sales explanation.
+- A person spots omitted or misunderstood intent in a visual, corrects it, and
+  recognizes that correction in the revised brief and experience.
 - A person says “more like this” and recognizes both the requested change and
   the important parts that stayed intact.
 - A person learns something from trying the selected interaction and can revise it
@@ -103,3 +122,7 @@ rather than presenting cosmetic variety as experience exploration.
 ## Changelog
 
 - **2026-09-14** — First draft from the captured working direction; not ratified.
+- **2026-09-14** — Clarified that visual review can correct a revisioned
+  interpreted brief; representation fidelity follows the review question; caller
+  adoption remains caller-owned; and the initial POC mockup is one standalone
+  self-contained HTML file, while broader formats are deferred.

@@ -27,13 +27,24 @@ and brand references are welcome, but not required.
 
 Speed matters more than pixel-perfect polish at this stage. The aim is to make
 exploring alternatives easy enough that people actually do it, instead of
-settling into repeated corrections of the first generated result. Mockup delivery
-is not limited to HTML, and the method is not a fixed catalog of app templates.
+settling into repeated corrections of the first generated result. Visual review
+also checks whether the tool understood the idea: people can correct missing or
+misinterpreted intent, not just choose or restyle a direction. Detail fits the
+question—lean for flow review, richer when judging branding or visual expression.
+
+For the initial POC, the delivered mockup is one self-contained `.html` file
+that opens directly in a browser: no network, server, build or companion files
+are needed to try the central task. Optional explainers and decision materials
+may accompany it. Broader mockup formats are deferred. This delivery boundary
+does not require the smart tool or its live dashboard to be offline or single-file.
 
 Amplifier is intended to power the work underneath. Smart-tool packaging is
 intended to let other agent apps use the capability without adopting an Amplifier
-bundle. The handoff should preserve the selected experience without dictating
-how the production app is engineered.
+bundle. Trying a downloaded mockup does not itself submit decisions to the caller.
+The handoff includes corrected intent and important choices, not just the artifact.
+The caller decides how to adopt them into its own vision or contracts; Possibly
+does not rewrite or approve those documents. The handoff preserves the selected
+experience without dictating how the production app is engineered.
 
 ## Project status
 

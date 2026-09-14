@@ -41,12 +41,17 @@ silently deleting the results.
 3. **The visible artifact and decision target are identifiable.**
    The dashboard identifies the exploration, direction and revision being shown.
    Inspection and prototype interactions are distinguished from explicit selection,
-   rejection and feedback. Stale views cannot silently change a different revision.
+   rejection and feedback. It identifies the current interpreted-brief revision
+   when relevant, so visual review can expose omitted or misunderstood intent.
+   Stale views cannot silently change a different revision.
 4. **Explicit dashboard decisions are durable, acknowledged actions.**
    Selection, rejection and feedback accepted by the tool update exploration state
-   and produce an observation through `caller-interaction.v1.md`. The dashboard
-   shows success only after acceptance; failed submission or disconnection is
-   visible. Refreshing the page preserves accepted actions and their receipts.
+   and produce an observation through `caller-interaction.v1.md`. An accepted
+   visual-review intent correction creates the identified brief revision and
+   updates affected current directions/artifacts or marks them superseded. The
+   dashboard shows success only after acceptance; failed submission or
+   disconnection is visible. Refreshing the page preserves accepted actions and
+   their receipts.
 5. **Meaningful activity is observable without exposing private reasoning.**
    The dashboard and caller can distinguish preparation, available material,
    waiting for input, refinement and terminal outcomes. Viewing activity, when
@@ -65,7 +70,9 @@ silently deleting the results.
 8. **Prototype content does not inherit dashboard control authority.**
    Generated prototype code cannot silently submit selections, access unrelated
    exploration data or gain the caller's credentials. Rendering/access failures
-   remain distinguishable from a human decision.
+   remain distinguishable from a human decision. The initial-POC standalone HTML
+   mockup may open independently, but it is not a dashboard-control channel:
+   offline interactions do not silently create durable caller decisions.
 
 ## What v1 deliberately does NOT freeze
 
@@ -86,10 +93,14 @@ Each currently reads **Can't check**, not passed.
 - Presentable output starts/updates a dashboard without an extra start request.
 - A viewer-opening failure is reported rather than described as successful display.
 - Selection is acknowledged, survives refresh and reaches the caller with the shown revision.
+- An accepted visual-review intent correction identifies its brief revision and
+  leaves affected directions/artifacts updated or visibly superseded.
 - Prototype clicks alone create no design-selection or downstream-development authorization.
 - Call completion while awaiting review leaves the exploration available, not falsely done.
 - Caller stop and declared done stop writes, release owned resources and preserve receipts.
 - Prototype content cannot exercise dashboard decision controls without an explicit human action.
+- Offline interaction with a downloaded initial-POC HTML mockup does not create a
+  durable dashboard or caller decision.
 
 ## Reserved / open questions (NOT frozen)
 

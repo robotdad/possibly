@@ -33,9 +33,13 @@ someone make it.
 1. **Conversation context and material references are valid inputs.**
    Either may be supplied alone or together; UI references and assets are optional.
    An otherwise usable app description is not rejected merely for lacking a mockup.
-2. **Requirements are distinguished from inferred possibilities.**
-   The interpreted brief identifies supplied intent, explicit UI guidance and open
-   choices. Inaccessible sources are reported, not represented as having been read.
+2. **Requirements are distinguished from inferred possibilities and remain
+   correctable.** The interpreted brief identifies supplied intent, explicit UI
+   guidance and open choices. Visual review may reveal omitted or misunderstood
+   intent. When such a correction is accepted, it creates an identified brief
+   revision and updates every affected current direction or artifact; contrary
+   material is revised or clearly superseded rather than left looking current.
+   Inaccessible sources are reported, not represented as having been read.
 3. **Alternatives are derived from the app's users and tasks.**
    The person need not specify each design in advance or choose an app template.
    Clarifying questions address missing intent rather than outsource all exploration.
@@ -43,9 +47,12 @@ someone make it.
    A set presented as alternative experiences differs in how the task is accomplished.
    Theme-only variants are identified as visual exploration, not falsely counted as
    different task approaches.
-5. **Visuals carry the comparison.**
-   Each direction shows representative states or screens for the central task and
-   its practical tradeoff. Prose alone is not a delivered visual direction.
+5. **Visuals carry the comparison at fidelity suited to the question.** Each
+   direction shows representative states or screens for the central task and its
+   practical tradeoff. A lean flow review may use a lean representation, while a
+   visual or branding question may legitimately need greater visual detail; this
+   is not an all-wireframe mandate. Prose alone is not a delivered visual
+   direction.
 6. **Selection precedes default click-through investment.**
    The person can select or redirect from lightweight directions before a working
    click-through is generated. The normal flow does not require trying several apps.
@@ -68,6 +75,9 @@ The test proposal must include good/bad cases and explicit false-positive risks.
 - Context-only, references-only and mixed inputs work without mandatory UI assets (1).
 - An inaccessible reference is named, and an inferred UI preference is not stated
   as a supplied requirement (2).
+- A visual-review omission or misunderstanding accepted as an intent correction
+  creates an identifiable brief revision, and affected directions/artifacts are
+  updated or marked superseded rather than appearing current in conflict with it (2).
 - The same method handles unrelated approved scenarios without bespoke design
   instructions or fixed-template admission restrictions (3).
 - An approved human rubric distinguishes task alternatives from cosmetic variants
@@ -81,3 +91,5 @@ The test proposal must include good/bad cases and explicit false-positive risks.
   sufficient for the first experiment?
 - How do callers supply context and references, and how are access failures surfaced?
 - Which ambiguities require a question instead of an explicitly labeled assumption?
+- What review record makes an accepted brief correction and superseded material
+  understandable without adding another mandatory approval gate?

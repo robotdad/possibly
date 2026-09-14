@@ -42,15 +42,21 @@ the wrong outcome.
    Referring to an older revision never silently targets a newer one. Invalid or
    ambiguous references produce an actionable result rather than a guessed choice.
 4. **The caller has a documented way to observe changes since its last reading.**
-   Dashboard availability, meaningful activity, accepted human decisions and
-   terminal outcomes are receivable or retrievable without screen scraping.
+   Dashboard availability, meaningful activity, accepted human decisions, accepted
+   intent corrections and terminal outcomes are receivable or retrievable without
+   screen scraping.
    Observations carry identity and order information; a delivery gap or expired
    history is explicit. Refreshing the dashboard cannot erase accepted decisions.
-5. **Decision acknowledgement is distinct from event delivery and execution.**
-   A receipt identifies the accepted action and resulting state revision; an event
-   reports that fact, not a new instruction each time it is read. Repeated delivery
-   cannot itself authorize duplicate generation. Dashboard selection does not
-   authorize production development or imply the caller has already acted on it.
+5. **Decision acknowledgement is distinct from event delivery, execution and
+   caller adoption.** A receipt identifies the accepted action, resulting state
+   revision, and any corrected intent or important change; an event reports that
+   fact, not a new instruction each time it is read. Repeated delivery cannot
+   itself authorize duplicate generation. Dashboard selection does not authorize
+   production development or imply the caller has already acted on it.
+   Accepting an intent correction records the revised brief and supersedes
+   affected material; regeneration follows the request's existing execution
+   authority. If further authorization is needed, the caller receives corrected
+   state and the pending regeneration request, not a claim of regenerated output.
 6. **The caller can continue or stop without an inaccessible prompt.**
    Missing human input is returned as an identified question or waiting state.
    Stop requests produce a correlated outcome, distinguishing accepted/stopping
@@ -60,6 +66,11 @@ the wrong outcome.
    Internal prompts, model choices and Agent session identifiers are not required
    to interpret artifacts, retrieve decisions or resume an exploration. Tool
    execution approval is never represented as human design approval.
+8. **Caller-owned governing materials remain caller-owned.** The tool does not
+   implicitly edit or approve a caller's vision, contracts, or equivalent
+   governing materials. The caller decides whether and how to adopt visible
+   accepted corrections, important changes, selections and handoff information
+   under its own process.
 
 ## What v1 deliberately does NOT freeze
 
@@ -77,10 +88,14 @@ Each currently reads **Can't check**, not passed.
 
 - An independent caller discovers capabilities and correlates a request and result.
 - A dashboard selection is observed by the caller with its actual target revision.
+- An accepted visual-review intent correction and its important affected changes
+  are visible to the caller with the resulting revision.
 - Re-reading an event does not repeat its effect; stale input is not silently retargeted.
 - A missed-history condition is explicit and current accepted decisions are retrievable.
 - Closed-stdin invocation returns an outcome/question; stop distinguishes request from completion.
 - Replacing internal Agent session machinery does not require caller transcript reconstruction.
+- Tool activity neither edits nor approves caller-owned governing materials; the
+  caller's adoption is distinguishable from tool acknowledgement.
 
 ## Reserved / open questions (NOT frozen)
 
