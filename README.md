@@ -38,13 +38,15 @@ how the production app is engineered.
 ## Project status
 
 Possibly is at the direction-setting stage. This repository contains a draft
-vision and two draft behavioral contracts; there is no runnable implementation
+vision and four draft behavioral contracts; there is no runnable implementation
 or installation procedure yet. The flow above describes the intended experience,
 not verified capabilities.
 
 - [Vision](docs/VISION.md)
 - [Context to Visual Choice contract](contracts/exploration.v1.md)
 - [Selected Experience Continuity contract](contracts/selection-continuity.v1.md)
+- [Calling Agent Interaction contract](contracts/caller-interaction.v1.md)
+- [Dashboard Lifecycle and Human Actions contract](contracts/dashboard-lifecycle.v1.md)
 
 ## Help shape it
 
