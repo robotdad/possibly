@@ -64,6 +64,8 @@ seizing host resources.
    the current interpreted-brief revision when relevant, so visual review can
    expose omitted or misunderstood intent. Stale views cannot silently change a
    different revision.
+   If newer choices conflict with applying feedback from an older view, the
+   person can choose the reviewed base or explicitly carry the change forward.
 5. **Authorized presentation decisions are durable, acknowledged actions.**
    Selection, rejection and feedback accepted through the built-in dashboard,
    a host-provided UI, or direct public controls update exploration state and
@@ -84,13 +86,24 @@ seizing host resources.
    while human review remains pending. Terminal status identifies retained
    artifacts/decisions and any library-owned resources whose cleanup failed; the
    caller can await that terminal outcome.
-8. **Shutdown does not erase choices or seize host resources.** After stopping,
-   library decision writes are refused visibly; accepted decisions remain
+   Export alone does not finish exploration; export and finish may be requested
+   together. Finish ends live work successfully; stop is the interruption path,
+   with partial work and cleanup failures reported explicitly.
+   Closing a viewer only disconnects that viewer: it implies neither selection
+   nor stop, grants no new authority, and does not extend existing work limits.
+8. **Shutdown does not erase choices or seize host resources.** While stopped or
+   finished, ordinary library decision writes are refused visibly; accepted decisions remain
    available through the caller contract. The tool releases only live storage
    handles, background tasks, services, viewers, and presenter resources it owns,
    without deleting retained artifacts or decisions. It does
    not close unrelated browser tabs, stop a host service or UI, delete caller
    storage, or report stopped while its owned interactive service accepts writes.
+   Retained exploration state, including pending needs, remains available for an
+   explicit later continuation. Returning can reuse the same exploration without
+   reconstructing its context, creating new revisions while preserving the base.
+   Restart only needed, authorized live resources; prior generation permission
+   does not silently restart spending. Old presentation submissions must not
+   bypass the closed state or target a newly continued revision without validation.
 9. **Prototype content does not inherit presentation control authority.**
    Generated prototype code cannot silently submit selections, access unrelated
    exploration data or gain the caller's credentials. Rendering/access failures
@@ -133,6 +146,11 @@ Each currently reads **Can't check**, not passed.
 - Call completion while awaiting review leaves the exploration available, not falsely done.
 - Caller stop and declared done stop library writes, release only library-owned
   resources, preserve receipts, and yield a terminal cleanup outcome.
+- Export alone leaves exploration open. Closing the viewer neither stops the
+  exploration nor authorizes additional execution.
+- Finish/stop preserves context, choices and pending needs for explicit later
+  continuation; new revisions preserve the base and old viewer submissions
+  cannot bypass lifecycle or revision validation.
 - Prototype content cannot exercise authorized presentation decision controls
   without an explicit human action.
 - Offline interaction with a downloaded initial-POC HTML mockup does not create a
@@ -140,8 +158,9 @@ Each currently reads **Can't check**, not passed.
 
 ## Reserved / open questions (NOT frozen)
 
-- What exactly declares an exploration done, and does the person request it in either surface?
-- Does closing the built-in dashboard browser mean stop, disconnect, or merely
-  hiding that dashboard?
+- How are explicit finish and declared done conditions represented, and how are
+  in-flight work or pending application conflicts resolved before completion?
+- How does a presenter reconnect or reopen after finish/stop without reviving
+  obsolete write contexts or execution grants?
 - What remains viewable after shutdown, and for how long is decision history retained?
 - Which viewing activity matters to the caller, and how is it summarized?

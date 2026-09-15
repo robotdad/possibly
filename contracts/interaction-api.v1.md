@@ -11,8 +11,9 @@ It elaborates the [Calling Agent Interaction contract](caller-interaction.v1.md)
 and [Dashboard Lifecycle contract](dashboard-lifecycle.v1.md), alongside
 [Context to Visual Choice](exploration.v1.md) and
 [Selected Experience Continuity](selection-continuity.v1.md).
-Reconciliation of lifecycle details across these drafts remains outstanding;
-this draft does not silently amend or supersede those documents.
+The related behavioral drafts carry the intended interaction requirements.
+The concrete schemas, method names, runner modes and recovery mechanisms here
+remain provisional elaborations, not amendments to or replacements for those promises.
 
 ## 1. What this preserves
 
@@ -222,15 +223,21 @@ rejected needs remain cancelled. Ordinary
 decision writes from an old viewer fail visibly. `reopen()` requires an explicit
 retained base and creates a new active period, with fresh state version/authority.
 It does not revive old viewer write contexts or cancelled questions. Suspended needs
-are presented for continuation; still-relevant needs receive an explicitly linked
-successor question in the new operation before accepting an answer. Nothing is
-silently discarded or answered against the closed operation. Reads/export
+are presented for explicit reactivation under the new authority; a still-pending
+question retains its question and operation identities when that operation is
+continued. Reactivation must validate relevance and bind the operation to the new
+active period before accepting an answer. Cancelled/completed operations are not
+reactivated; a new refinement has a new operation identity. Nothing is silently
+discarded or executed against the closed period. Reads/export
 of retained material do not themselves reopen the exploration.
 
 `resume_operation()` is limited to runner/process interruption within the same
 still-active period, with authority revalidated and no finish/stop fence. It rejects
 finished/stopped periods and cancelled/succeeded operations. Returning after closure
-requires reopen and a new operation; public history retains the earlier work and needs.
+requires explicit reopen and renewed authority. It may explicitly reactivate
+suspended pending work or accept a new refinement operation; public history retains
+the earlier work and needs. The reactivation method and state-transition details
+remain provisional; `resume_operation()` cannot bypass reopen.
 Lifecycle operation terminal snapshots carry `CleanupOutcome` on both success and
 failure, not an unstructured success message.
 
@@ -311,9 +318,10 @@ snapshot and restart from a matching cursor; it must not imply complete replay.
 | Exploration and continuity contracts | Brief/directions, deliberate selection, refinement preservation and HTML/handoff outputs; this API does not prove their quality. |
 | Interaction requirements | Finish-now/continue-later, internal work items, revision feedback, delayed questions and identity model. |
 
-All related contracts remain DRAFT. Reopen, finish semantics and notification
-limits require cross-contract reconciliation before implementation. Proposed API
-details here are not evidence of conformance.
+All related contracts remain DRAFT. The behavioral drafts reflect bounded
+continuation, delayed questions, retained work and finish-now/continue-later.
+Concrete API details here remain proposals, not evidence of conformance; source/API
+compatibility and executable checks are still outstanding.
 
 Still proposed or unverified:
 

@@ -77,6 +77,10 @@ cancel, or otherwise seize caller-shared resources.
    Requests, operation outcomes, directions and artifact revisions are correlated.
    Referring to an older revision never silently targets a newer one. Invalid or
    ambiguous references produce an actionable result rather than a guessed choice.
+   An exploration ID spans the experience and later continuation. Operation IDs
+   identify individual work and outcomes; question IDs identify answer targets;
+   revision IDs identify reviewed or changed material. Callers and presenters
+   carry these identities without requiring manual human bookkeeping.
 4. **The caller has a documented way to observe changes since its last reading.**
    Presentation availability, meaningful activity, accepted human decisions,
    accepted intent corrections and terminal outcomes are receivable or
@@ -84,6 +88,11 @@ cancel, or otherwise seize caller-shared resources.
    Observations carry identity and order information; a delivery gap or expired
    history is explicit. Refreshing or replacing an authorized presentation
    adapter cannot erase accepted decisions.
+   Current operation status and outstanding questions are durably retrievable
+   even when the caller is no longer waiting or observation history has expired.
+   Notification and client wake-up depend on supported, authorized host mechanisms;
+   neither is guaranteed. Recording a need, delivering an observation, waking
+   an agent and reaching a person are distinct outcomes.
 5. **Decision acknowledgement is distinct from event delivery, execution and
    caller adoption.** A receipt identifies the accepted action, resulting state
    revision, and any corrected intent or important change; an event reports that
@@ -94,16 +103,31 @@ cancel, or otherwise seize caller-shared resources.
    affected material; regeneration follows the request's existing execution
    authority. If further authorization is needed, the caller receives corrected
    state and the pending regeneration request, not a claim of regenerated output.
+   The caller may grant bounded continuation authority up front, such as making
+   one interactive mockup after selection and then waiting for feedback. The
+   matching action may continue without a second human approval; without that
+   authority, return the decision receipt and proposed next action to the caller.
+   Repeating the same identified submission returns its original receipt, not
+   duplicate work; conflicting resubmissions are reported rather than acknowledged
+   as the original action. Retry identifiers and retention limits remain explicit
+   API design details, not an unbounded retry guarantee.
 6. **The caller can continue or stop without an inaccessible prompt.**
    Missing human input is returned as an identified question or waiting state.
    Stop requests and cancellation produce correlated outcomes, distinguishing
    accepted/stopping from terminal completion and cleanup failure. The caller can
    await that terminal outcome. Failure is explicit; partial completion is
    identified, not presented as complete success.
+   A delayed need identifies the blocking question, why it matters, and its
+   operation; the blocked work pauses. An accepted answer continues that same
+   pending operation within valid authority and access. A later refinement is a
+   new operation in the same exploration, not a replay of the answered question.
 7. **Public state survives internal intelligence boundaries.**
    Internal prompts, model choices and Agent session identifiers are not required
    to interpret artifacts, retrieve decisions or resume an exploration. Tool
    execution approval is never represented as human design approval.
+   Possibly may persist internal work items and checkpoints for execution and
+   recovery. They are not the caller's queue, do not require caller knowledge of
+   their format, and do not themselves authorize resumed work.
 8. **Caller-owned governing materials remain caller-owned.** The tool does not
    implicitly edit or approve a caller's vision, contracts, or equivalent
    governing materials. The caller decides whether and how to adopt visible
@@ -120,6 +144,11 @@ cancel, or otherwise seize caller-shared resources.
    initialize intelligence. Model configuration and access follow explicitly
    supplied or opted-in sources. Resource ownership and cleanup are documented;
    stop preserves retained results and leaves caller-shared resources alone.
+   Durable storage is explicitly supplied or selected by the host. Finish/stop
+   retains the exploration record described in `selection-continuity.v1.md`,
+   independently of exported HTML. Later continuation requires a new explicit
+   request and appropriate authority; previous spending permission does not
+   silently restart work.
 
 ## What v1 deliberately does NOT freeze
 
@@ -160,13 +189,23 @@ Each currently reads **Can't check**, not passed.
   storage, services, UI, and other shared resources untouched.
 - Tool activity neither edits nor approves caller-owned governing materials; the
   caller's adoption is distinguishable from tool acknowledgement.
+- A delayed question remains retrievable without notifications, identifies its
+  operation, and an accepted answer continues that operation rather than creating
+  unrelated work; a history gap does not hide outstanding needs.
+- Selection with a valid bounded continuation grant triggers only its allowed
+  follow-up; without one it returns the receipt and proposed next action.
+- A repeated identified submission returns the original receipt without duplicate
+  work; conflicting resubmission is not reported as accepted.
+- Internal work items survive interruption without becoming caller prerequisites
+  or reviving expired/closed execution authority.
 
 ## Reserved / open questions (NOT frozen)
 
 - Which caller adapter demonstrates the first complete round trip?
 - What observation cadence makes the caller sufficiently informed without flooding it?
-- Which actions may the tool continue autonomously after selection under the original request?
+- How are bounded continuation scopes, limits and expiry expressed and enforced?
 - What identifies duplicate requests, and how are conflicting caller/dashboard writes resolved?
 
 Dashboard lifecycle and action meanings belong to `dashboard-lifecycle.v1.md`.
 Experience quality and preservation belong to the exploration and continuity contracts.
+Proposed concrete public types and methods live in `interaction-api.v1.md`.

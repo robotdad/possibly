@@ -36,16 +36,22 @@ someone make it.
    An otherwise usable app description is not rejected merely for lacking a
    mockup. The tool does not imply access to an unsupplied conversation or a
    caller-shared filesystem.
+   It derives a brief from usable supplied context without a mandatory intake
+   form or separate brief-approval gate before generation.
 2. **Requirements are distinguished from inferred possibilities and remain
    correctable.** The interpreted brief identifies supplied intent, explicit UI
-   guidance and open choices. Visual review may reveal omitted or misunderstood
+   guidance, assumptions and open choices. Visual review may reveal omitted or misunderstood
    intent. When such a correction is accepted, it creates an identified brief
    revision and updates every affected current direction or artifact; contrary
    material is revised or clearly superseded rather than left looking current.
    Inaccessible sources are reported, not represented as having been read.
+   An optional unavailable reference need not block exploration; a required
+   reference cannot be silently ignored or claimed as followed.
 3. **Alternatives are derived from the app's users and tasks.**
    The person need not specify each design in advance or choose an app template.
    Clarifying questions address missing intent rather than outsource all exploration.
+   Questions are focused on gaps that materially change the exploration; delayed
+   needs follow the identified-question behavior in `caller-interaction.v1.md`.
 4. **Experience directions offer task-relevant differences.**
    A set presented as alternative experiences differs in how the task is accomplished.
    Theme-only variants are identified as visual exploration, not falsely counted as
@@ -81,6 +87,10 @@ No assertions below have executable checks or approved fixtures yet: **Can't che
 The test proposal must include good/bad cases and explicit false-positive risks.
 
 - Context-only, references-only and mixed inputs work without mandatory UI assets (1).
+- Usable context proceeds without a mandatory form or separate brief approval;
+  consequential missing intent produces a focused question (1, 3).
+- Optional inaccessible references are distinguished from required ones, with no
+  claim that unread guidance was followed (2).
 - An inaccessible reference is named, and an inferred UI preference is not stated
   as a supplied requirement (2).
 - A visual-review omission or misunderstanding accepted as an intent correction

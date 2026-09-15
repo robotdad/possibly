@@ -37,6 +37,9 @@ unrequested replacement, not a prohibition on changing the interaction.
    more like X” identifies the requested visual or interaction transfer, the
    referenced material and revision, and what should remain. Material ambiguity
    is exposed rather than silently resolved into a different experience.
+   Feedback retains the revision actually reviewed even when newer work exists.
+   If applying it conflicts with newer choices, ask whether to continue from the
+   reviewed version or carry the change into the newer one; never silently retarget.
 2. **The result preserves choices outside the requested change and follows the
    current interpreted intent.** A theme change does not silently replace the task
    flow; an interaction change does not silently discard the selected branding.
@@ -73,6 +76,15 @@ unrequested replacement, not a prohibition on changing the interaction.
    `dashboard-lifecycle.v1.md` and `caller-interaction.v1.md` remain in force.
    Submitting selections, feedback or corrections to the exploration uses the
    authorized presentation adapter or calling agent, not the standalone export.
+8. **Export and retained exploration serve different purposes.** Export produces
+   a snapshot without ending the exploration. A standalone HTML mockup is not a
+   complete exploration backup. The retained brief, permitted source materials,
+   choices, revision history, artifacts and pending questions support returning
+   later without reconstructing the caller's conversation. Finishing or stopping
+   preserves that record; deletion is a separate explicit action. Continuing from
+   retained work creates a new revision rather than overwriting the earlier one,
+   under the lifecycle and authority rules in `caller-interaction.v1.md` and
+   `dashboard-lifecycle.v1.md`.
 
 ## What v1 deliberately does NOT freeze
 
@@ -105,6 +117,10 @@ Human judgments require an approved rubric and a recorded review, not model asse
   distinguishing mocks from requirements (6).
 - Interacting with a downloaded HTML file offline creates no silent durable caller
   decision; such decisions use the authorized presentation/caller path (7).
+- Feedback submitted from an older reviewed revision keeps that target, and a
+  conflict with newer choices requires an explicit resolution (1).
+- Export leaves exploration open; finish/stop preserves retained context and
+  later continuation creates a new revision without overwriting the base (8).
 
 ## Reserved / open questions (NOT frozen)
 
