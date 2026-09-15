@@ -68,10 +68,11 @@ unrequested replacement, not a prohibition on changing the interaction.
    optional, not a condition of complete delivery.
 7. **A downloaded initial-POC HTML file is an independent mockup, not a dashboard
    control channel.** Its offline interactions do not silently create durable
-   caller decisions. The live-dashboard decision and observation obligations in
+   caller decisions. The decision and observation obligations for the selected
+   built-in dashboard, host-provided UI, or headless caller in
    `dashboard-lifecycle.v1.md` and `caller-interaction.v1.md` remain in force.
    Submitting selections, feedback or corrections to the exploration uses the
-   live dashboard or calling agent, not the standalone export.
+   authorized presentation adapter or calling agent, not the standalone export.
 
 ## What v1 deliberately does NOT freeze
 
@@ -103,7 +104,7 @@ Human judgments require an approved rubric and a recorded review, not model asse
   preserving chosen interactions, corrected intent and important changes, and
   distinguishing mocks from requirements (6).
 - Interacting with a downloaded HTML file offline creates no silent durable caller
-  decision; such decisions use the live dashboard/caller path (7).
+  decision; such decisions use the authorized presentation/caller path (7).
 
 ## Reserved / open questions (NOT frozen)
 

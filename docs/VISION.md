@@ -28,20 +28,26 @@ also tests the tool's interpreted brief. When it reveals omitted or misunderstoo
 intent and the correction is accepted, the identified brief revision and all
 affected current directions or artifacts are updated or visibly superseded.
 
-Possibly is an Amplifier-powered smart tool: a capability another agent application
-can call without requiring its users to adopt an Amplifier app or load its internal
-agents. The calling app supplies context and presents results; the person chooses
-the experience; a separate development process builds the real app and backend.
-The tool makes accepted corrections and important changes visible to that caller
-and to handoff consumers, but neither edits nor approves the caller's own vision
-or contracts. The caller decides adoption through its own process.
+Possibly is an Amplifier-powered, library-first smart tool: another agent
+application can call every capability through its public library without
+requiring users to adopt an Amplifier app, load internal agents, or shell out to
+the default thin CLI adapter. The calling app supplies context and explicitly
+chooses built-in dashboard, host-provided UI, or headless presentation; the
+person chooses the experience; a separate development process builds the real
+app and backend. When selected, the built-in dashboard automatically starts or
+updates when material is ready. Host UI resources remain host owned; service
+startup, opening a viewer and taking focus follow the host's explicit permissions.
+The tool makes accepted corrections and important changes visible
+to that caller and to handoff consumers, but neither edits nor approves the
+caller's own vision or contracts. The caller decides adoption through its own
+process.
 
 The initial POC delivers one self-contained HTML mockup file that opens directly
 in a browser, with no network, server, build or companion files needed to try it.
 Optional explainers and decision materials may accompany it. Broader mockup
 formats are deferred. This is the delivered mockup, not a requirement that the
-smart tool or live dashboard be single-file or offline. Trying the standalone
-mockup does not itself submit decisions to the caller.
+smart tool or its authorized presentation adapter be single-file or offline.
+Trying the standalone mockup does not itself submit decisions to the caller.
 
 The selected experience and its decision record connect exploration to development.
 They distinguish intended interaction from fake behavior and unresolved assumptions,
@@ -126,3 +132,7 @@ rather than presenting cosmetic variety as experience exploration.
   interpreted brief; representation fidelity follows the review question; caller
   adoption remains caller-owned; and the initial POC mockup is one standalone
   self-contained HTML file, while broader formats are deferred.
+- **2026-09-14** — Made the library-first public boundary explicit: the default
+  CLI is a thin adapter, hosts explicitly choose built-in dashboard,
+  host-provided UI, or headless presentation, and service/viewer/focus authority
+  remains separate and host controlled.

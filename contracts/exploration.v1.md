@@ -6,9 +6,10 @@ No reference implementation or approved conformance kit exists yet.
 
 ## What it looks like
 
-A calling agent supplies a conversation and/or references to app-description
-materials. The person receives visually comparable alternatives, with enough
-of the central task shown to understand why one approach differs from another.
+A calling agent explicitly supplies conversation content and/or references to
+app-description materials. The person receives visually comparable alternatives,
+with enough of the central task shown to understand why one approach differs
+from another.
 
 ```text
 Context/materials → known intent + open choices → visual directions
@@ -32,7 +33,9 @@ someone make it.
 
 1. **Conversation context and material references are valid inputs.**
    Either may be supplied alone or together; UI references and assets are optional.
-   An otherwise usable app description is not rejected merely for lacking a mockup.
+   An otherwise usable app description is not rejected merely for lacking a
+   mockup. The tool does not imply access to an unsupplied conversation or a
+   caller-shared filesystem.
 2. **Requirements are distinguished from inferred possibilities and remain
    correctable.** The interpreted brief identifies supplied intent, explicit UI
    guidance and open choices. Visual review may reveal omitted or misunderstood
@@ -56,6 +59,11 @@ someone make it.
 6. **Selection precedes default click-through investment.**
    The person can select or redirect from lightweight directions before a working
    click-through is generated. The normal flow does not require trying several apps.
+7. **Directions are available to every authorized presentation policy.** The
+   public result exposes comparable directions and their identities to the caller
+   library contract. A built-in dashboard, host-provided UI, or headless caller
+   can use them without creating a different exploration or losing later
+   selection, observation, refinement, export, or stop capability.
 
 ## What v1 deliberately does NOT freeze
 
@@ -84,6 +92,9 @@ The test proposal must include good/bad cases and explicit false-positive risks.
   and checks that their visual sequences support the stated differences (4–5).
 - The observable sequence reaches a selection/redirect point before default
   click-through generation (6).
+- The same returned direction identities and artifacts are available for a
+  built-in dashboard, host-provided UI, or headless caller without changing the
+  exploration or weakening subsequent public controls (7).
 
 ## Reserved / open questions (NOT frozen)
 
