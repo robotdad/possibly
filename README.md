@@ -58,7 +58,7 @@ experience without dictating how the production app is engineered.
 ## Project status
 
 Possibly is at the direction-setting stage. This repository contains a draft
-vision and four draft behavioral contracts; there is no runnable implementation
+vision, four draft behavioral contracts and a draft public API contract; there is no runnable implementation
 or installation procedure yet. The flow above describes the intended experience,
 not verified capabilities.
 
@@ -67,6 +67,7 @@ not verified capabilities.
 - [Selected Experience Continuity contract](contracts/selection-continuity.v1.md)
 - [Calling Agent Interaction contract](contracts/caller-interaction.v1.md)
 - [Dashboard Lifecycle and Human Actions contract](contracts/dashboard-lifecycle.v1.md)
+- [Public Interaction API contract — provisional types and caller round trip](contracts/interaction-api.v1.md)
 
 ## Help shape it
 
