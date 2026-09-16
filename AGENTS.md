@@ -44,7 +44,7 @@ an explicit fresh grant. See `src/possibly/docs/caller-guide.md` and `providers.
 ## Develop from this checkout
 
 ```sh
-uv sync --extra dev --extra openai --extra anthropic
+uv sync --extra dev
 uv run playwright install chromium
 uv run possibly --help
 uv run pytest -q

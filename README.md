@@ -37,8 +37,8 @@ Requires **Python 3.12+**, **Git**, and **uv**. The current release is a local P
 validated on macOS.
 
 ```sh
-uv tool install --python 3.12 'possibly[openai] @ git+https://github.com/robotdad/possibly'
-uv tool run --from 'possibly[openai] @ git+https://github.com/robotdad/possibly' playwright install chromium
+uv tool install --python 3.12 'possibly @ git+https://github.com/robotdad/possibly'
+uv tool run --from 'possibly @ git+https://github.com/robotdad/possibly' playwright install chromium
 possibly --help
 ```
 
@@ -46,6 +46,10 @@ This installs an isolated CLI from the Git source; it does not require you to cl
 or maintain a checkout. Git is needed by the installer. If `possibly` is not on your
 PATH, run `uv tool update-shell` and open a new terminal. The browser command uses
 the tool package’s Playwright dependency.
+
+One installation supports every provider in Amplifier’s catalog; no provider extras
+are required. Amplifier downloads each provider module and its dependencies on first
+use, then caches them. That first use needs network access and can take longer.
 
 Make `OPENAI_API_KEY` available in the environment that launches your agent or
 Possibly. Then check the connection:
@@ -58,7 +62,7 @@ possibly --model-env test-provider
 OpenAI is the default. Other supported provider options include Anthropic, Gemini,
 Azure OpenAI, GitHub Copilot, ChatGPT OAuth, and compatible local endpoints. Set
 `POSSIBLY_PROVIDER` and optionally `POSSIBLY_MODEL` to choose; see
-[provider setup](src/possibly/docs/providers.md) for dependencies, environment
+[provider setup](src/possibly/docs/providers.md) for environment
 variables, login, and which paths have been live-tested. The dashboard also offers
 session settings, model discovery, and connection tests.
 

@@ -6,6 +6,14 @@ ChatGPT subscription OAuth, Ollama, Chat Completions compatible endpoints, and v
 Provider modules own their model defaults and authentication behavior. Possibly
 never silently falls back to another provider.
 
+## Installation
+
+The standard Possibly installation supports every provider listed above. No
+provider-specific install extras are required. Amplifier resolves and installs the
+selected provider module and its dependencies on first use, then reuses its cache.
+Allow network access and additional setup time for that first use. Credentials or
+OAuth authorization are still required for the selected service.
+
 ## Environment configuration
 
 | Variable | Meaning |
