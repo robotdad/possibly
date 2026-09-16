@@ -120,3 +120,9 @@ submission; the overall timeout still bounds provider retries.
 
 Checkpoints live in `STORE/operations/OPERATION_ID/TURN/`, alongside sanitized diagnostics.
 They are retained with the rest of the exploration. No automatic cleanup/expiry is added.
+
+Concept thumbnails open a large interactive preview without recording a selection.
+Previews retain the captured viewport and color scheme, with fit-to-panel or actual-size
+viewing. Mark two concepts and open the separate side-by-side comparison to compare;
+choose a direction only when ready to create its refinement workspace. Overall
+feedback is separate from feedback on a specific concept.

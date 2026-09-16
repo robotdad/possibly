@@ -191,3 +191,9 @@ an active comparison. The caller should still retrieve `review-snapshot` before
 acting on conversational feedback. Export remains the exact selected HTML plus
 handoff, with embedded assets and no model call. Refinements follow the selected
 concept's provider/model unless the caller explicitly overrides the provider.
+
+Concept thumbnails open a large interactive preview without recording a selection.
+Previews retain the captured viewport and color scheme, with fit-to-panel or actual-size
+viewing. Mark two concepts and open the separate side-by-side comparison to compare;
+choose a direction only when ready to create its refinement workspace. Overall
+feedback is separate from feedback on a specific concept.

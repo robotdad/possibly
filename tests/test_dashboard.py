@@ -5,7 +5,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 import pytest
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 from test_contracts import FakeIntelligence
 
 from possibly import Grant, Possibly, Presentation
@@ -70,22 +70,31 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
             page.get_by_role("button", name="Close settings").click()
             assert "test-model" not in json.dumps(p.store.get(eid))
             assert page.locator("iframe").count() == 0
-            page.get_by_role("button", name="Compare live", exact=True).first.click()
-            page.get_by_role("button", name="Compare live", exact=True).first.click()
-            assert page.locator("iframe").count() == 2
-            assert page.locator("iframe").first.get_attribute("sandbox") == "allow-scripts"
-            page.get_by_role("button", name="Clear comparison").click()
+            page.emulate_media(color_scheme="dark")
+            page.get_by_role("button", name="Open preview", exact=True).first.click()
+            frame = page.locator("#preview-dialog iframe")
+            assert frame.count() == 1
+            assert frame.get_attribute("sandbox") == "allow-scripts"
+            child = page.frames[-1]
+            child.wait_for_selector("body")
+            assert child.evaluate("innerWidth") == 1280
+            assert child.evaluate("getComputedStyle(document.documentElement).colorScheme") == "light only"
+            assert not p.review_snapshot(eid)["decisions"]
+            page.get_by_role("button", name="Back to concepts").click()
+            page.get_by_role("button", name="Mark for comparison", exact=True).first.click()
+            page.get_by_role("button", name="Mark for comparison", exact=True).first.click()
             assert page.locator("iframe").count() == 0
-            page.get_by_role("button", name="Compare live", exact=True).first.click()
+            page.get_by_role("button", name="Open side-by-side comparison").click()
+            assert page.locator("iframe").count() == 2
+            assert all(f.evaluate("innerWidth") == 1280 for f in page.frames[1:])
+            page.keyboard.press("Escape")
+            expect(page.locator("iframe")).to_have_count(0)
             page.get_by_text("Feedback on this concept", exact=True).first.click()
             page.get_by_label("Concept feedback").first.fill("Unsent concept note")
             page.get_by_text("Draft saved", exact=True).wait_for()
             snapshot = p.review_snapshot(eid)
             assert any("Unsent concept note" in r["drafts"].values() for r in snapshot["reviews"].values())
             assert not snapshot["decisions"]
-            page.get_by_role("button", name="Expand preview", exact=True).first.click()
-            assert page.locator(".preview.expanded").count() == 1
-            page.get_by_role("button", name="Close expanded preview").click()
             page.get_by_role("button", name="Choose this direction").first.click()
             page.get_by_role("status").filter(has_text="Recorded").wait_for()
             page.reload()

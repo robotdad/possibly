@@ -52,8 +52,8 @@ The [caller guide](src/possibly/docs/caller-guide.md) covers library and CLI usa
 
 1. **Explore.** Your agent supplies the brief. Possibly generates two or three
    concepts, optionally using different configured providers and models.
-2. **Compare.** Browse thumbnail cards, open two live previews side by side, and
-   try their screen navigation. Design rationale stays separate from the mockup.
+2. **Compare.** Open a thumbnail for a large interactive preview, or mark two concepts
+   for side-by-side comparison. Try their screen navigation. Design rationale stays separate from the mockup.
 3. **Choose and refine.** Each selected direction gets a focused workspace with
    version history and feedback. Keep exploring more than one if useful.
 4. **Export.** Take a self-contained HTML prototype and a JSON handoff containing
