@@ -30,8 +30,10 @@ thin JSON adapter. Compose capabilities using library values where possible.
 
 ## Install and prerequisites
 
-Install from source with `uv tool install 'possibly[openai] @ git+https://github.com/robotdad/possibly'`.
-For a checkout, run `uv sync --extra dev --extra openai`, then `uv run playwright install chromium`.
+Install the CLI without a checkout with `uv tool install --python 3.12 'possibly[openai] @ git+https://github.com/robotdad/possibly'`.
+Install its browser with `uv tool run --from 'possibly[openai] @ git+https://github.com/robotdad/possibly' playwright install chromium`.
+Run `possibly --help` from any working directory. If needed, run `uv tool update-shell` and open a new terminal.
+For development in a checkout, run `uv sync --extra dev --extra openai`, then `uv run playwright install chromium`.
 Add the anthropic extra when using Anthropic. Generation embeds Amplifier Agent v0.17.0 in-process;
 there is no Possibly-owned model credential store. `--model-env` explicitly opts into
 environment credentials, e.g. ANTHROPIC_API_KEY or OPENAI_API_KEY. Pass `--provider`

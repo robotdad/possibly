@@ -15,11 +15,11 @@ beating a personal best, or discovering an unplayed machine.
 
 ## Try it with your coding agent
 
-Give your agent this repository and an idea:
+Give your agent the project link and an idea—no checkout needed:
 
 > Use [Possibly](https://github.com/robotdad/possibly) to explore an app for tracking
-> household repairs. Read its README and agent instructions, set it up, and read
-> `possibly --help` (or `uv run possibly --help` from the checkout). Show me different
+> household repairs. Follow its README to install the tool, then read
+> `possibly --help`. Show me different
 > ways to approach the task, let me choose, then refine a clickable prototype.
 
 Possibly runs as a local CLI or Python library and uses **Amplifier Agent** for its
@@ -27,9 +27,9 @@ intelligence. Your coding agent needs permission to run local commands and acces
 to a configured model provider. Installing an agent skill alone does not provide
 model credentials.
 
-Already have this checkout? Tell your agent where it is and ask it to read
-[`AGENTS.md`](AGENTS.md) and run `uv run possibly --help` there. The command returns
-the current caller skill, including the interaction model and exact capabilities.
+Once installed, tell your agent to run `possibly --help`. It returns the current
+caller skill, including the interaction model and exact capabilities. You can use
+Possibly from your own project directory.
 
 ## Quick start
 
@@ -37,19 +37,22 @@ Requires **Python 3.12+**, **Git**, and **uv**. The current release is a local P
 validated on macOS.
 
 ```sh
-git clone https://github.com/robotdad/possibly.git
-cd possibly
-uv sync --extra openai
-uv run playwright install chromium
-uv run possibly --help
+uv tool install --python 3.12 'possibly[openai] @ git+https://github.com/robotdad/possibly'
+uv tool run --from 'possibly[openai] @ git+https://github.com/robotdad/possibly' playwright install chromium
+possibly --help
 ```
+
+This installs an isolated CLI from the Git source; it does not require you to clone
+or maintain a checkout. Git is needed by the installer. If `possibly` is not on your
+PATH, run `uv tool update-shell` and open a new terminal. The browser command uses
+the tool package’s Playwright dependency.
 
 Make `OPENAI_API_KEY` available in the environment that launches your agent or
 Possibly. Then check the connection:
 
 ```sh
-uv run possibly provider-settings
-uv run possibly --model-env test-provider
+possibly provider-settings
+possibly --model-env test-provider
 ```
 
 OpenAI is the default. Other supported provider options include Anthropic, Gemini,
@@ -90,6 +93,12 @@ batches took about 2–3 minutes. Earlier attempts failed too. The
 [trial report](docs/DIVERSITY-EVALUATION.md) records timings, critiques, and limits
 rather than promising a fixed wait. The illustration above is conceptual artwork,
 not a product screenshot.
+
+## Developing or contributing?
+
+Clone the repository only when you want to work on Possibly itself.
+[`AGENTS.md`](AGENTS.md#develop-from-this-checkout) covers checkout setup, tests,
+architecture boundaries, and the contribution workflow.
 
 ## Go deeper
 

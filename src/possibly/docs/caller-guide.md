@@ -32,7 +32,8 @@ for exact signatures. Library calls are synchronous; async hosts can use a worke
 Provider requests and login require explicit `allow_environment=True` / `--model-env`; settings reads expose presence only.
 OpenAI is the default. See [providers and settings](providers.md) for all nine providers, environment variables, process-only overrides, connection tests and OAuth/GitHub login.
 Install the corresponding extra. No credential values are serialized into records.
-Install browser runtime with `uv run playwright install chromium` in a checkout.
+For an installed tool, install Chromium with `uv tool run --from 'possibly[openai] @ git+https://github.com/robotdad/possibly' playwright install chromium`.
+Developers in a checkout can use `uv run playwright install chromium`.
 The generation adapter mounts only write_candidate, patch_candidate, read_candidate, inspect_candidate and submit_result. Chromium
 runs with network disabled. It does not receive the store, presenter token or provider keys
 in page content. No shell, arbitrary host filesystem tool, or delegation tool is mounted.
