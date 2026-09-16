@@ -13,61 +13,40 @@ app might start with “What can we finish this weekend?” or “What needs to 
 before someone can fix this?” A pinball log might center on tonight’s session,
 beating a personal best, or discovering an unplayed machine.
 
-## Try it with your coding agent
+## Quick start: bring an idea to your agent
 
-Give your agent the project link and an idea—no checkout needed:
+Give your coding agent this message, replacing the example with your own idea:
 
 > Use [Possibly](https://github.com/robotdad/possibly) to explore an app for tracking
-> household repairs. Follow its README to install the tool, then read
-> `possibly --help`. Show me different
-> ways to approach the task, let me choose, then refine a clickable prototype.
+> household repairs. Read its [agent skill](https://github.com/robotdad/possibly/blob/main/skills/possibly/SKILL.md)
+> for setup and usage. Show me different ways to approach the task, let me choose,
+> then refine a clickable prototype.
 
-Possibly runs as a local CLI or Python library and uses **Amplifier Agent** for its
-intelligence. Your coding agent needs permission to run local commands and access
-to a configured model provider. Installing an agent skill alone does not provide
-model credentials.
+Your agent installs and runs Possibly, opens its local review dashboard, and manages
+refinements and export. You describe what matters, try the concepts, and choose what
+to explore next. No repository checkout is needed.
 
-Once installed, tell your agent to run `possibly --help`. It returns the current
-caller skill, including the interaction model and exact capabilities. You can use
-Possibly from your own project directory.
+### Before your first exploration
 
-## Quick start
+Use a coding agent that can install and run local tools and open a browser.
+Possibly currently requires Python 3.12+, Git, uv, and Chromium; your agent can follow
+the setup instructions to check these and install the tool and browser. This is a
+local POC, validated on macOS.
 
-Requires **Python 3.12+**, **Git**, and **uv**. The current release is a local POC,
-validated on macOS.
+Possibly uses **Amplifier Agent** for its intelligence and needs its own configured
+model access. Your coding agent’s model access is not automatically shared with it.
+Ask your agent to help configure a provider; complete any required sign-in yourself.
+OpenAI is the default, with options including Anthropic, Gemini, Azure OpenAI,
+GitHub Copilot, ChatGPT OAuth, and compatible local endpoints. One installation
+supports them all, with provider components downloaded on first use. The dashboard
+also has provider settings and connection tests.
 
-```sh
-uv tool install --python 3.12 'possibly @ git+https://github.com/robotdad/possibly'
-uv tool run --from 'possibly @ git+https://github.com/robotdad/possibly' playwright install chromium
-possibly --help
-```
+### For the agent receiving this link
 
-This installs an isolated CLI from the Git source; it does not require you to clone
-or maintain a checkout. Git is needed by the installer. If `possibly` is not on your
-PATH, run `uv tool update-shell` and open a new terminal. The browser command uses
-the tool package’s Playwright dependency.
-
-One installation supports every provider in Amplifier’s catalog; no provider extras
-are required. Amplifier downloads each provider module and its dependencies on first
-use, then caches them. That first use needs network access and can take longer.
-
-Make `OPENAI_API_KEY` available in the environment that launches your agent or
-Possibly. Then check the connection:
-
-```sh
-possibly provider-settings
-possibly --model-env test-provider
-```
-
-OpenAI is the default. Other supported provider options include Anthropic, Gemini,
-Azure OpenAI, GitHub Copilot, ChatGPT OAuth, and compatible local endpoints. Set
-`POSSIBLY_PROVIDER` and optionally `POSSIBLY_MODEL` to choose; see
-[provider setup](src/possibly/docs/providers.md) for environment
-variables, login, and which paths have been live-tested. The dashboard also offers
-session settings, model discovery, and connection tests.
-
-Once setup works, hand the exploration to your agent. You do not need to learn the
-JSON API to try an idea.
+Start with the [agent skill](skills/possibly/SKILL.md) for installation, then read
+`possibly --help` for the current tool-owned skill and interaction model.
+The [caller guide](src/possibly/docs/caller-guide.md) covers library and CLI usage;
+[provider setup](src/possibly/docs/providers.md) covers credentials and sign-in.
 
 ## What the loop looks like
 
