@@ -1,0 +1,5 @@
+{
+  "manifest": "src/possibly/SMART_TOOL.md",
+  "cli_argv": [".venv/bin/possibly"],
+  "deterministic_smoke": ["manifest"]
+}

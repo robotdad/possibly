@@ -1,77 +1,103 @@
 # Possibly
 
-**Choose before you build.**
+**Explore the experience before you build the app.**
 
-When a coding agent builds the first interpretation of your app idea, that
-result often becomes the experience you spend the rest of the conversation
-adjusting. What if you could explore the possibilities before committing?
+![An idea branching into a journal, a map, and a planner, with one direction brought forward for refinement.](docs/images/possibly-possibilities.png)
 
-Possibly is an early-stage project exploring an Amplifier-powered smart tool
-that brings intentional experience exploration into the agent app you already use.
+Possibly helps you and your coding agent try different ways an app could work.
+Start with an idea, compare visual concepts, choose a direction, and refine a
+clickable prototype before committing to implementation.
 
-## Explore, choose, try
+The interesting difference is the **task**, not just the theme. A household repairs
+app might start with “What can we finish this weekend?” or “What needs to be ready
+before someone can fix this?” A pinball log might center on tonight’s session,
+beating a personal best, or discovering an unplayed machine.
 
-The intended flow starts with what you already have: conversation context,
-pointers to materials describing an app idea, or both. UI preferences, images
-and brand references are welcome, but not required.
+## Try it with your coding agent
 
-- **Explore** lightweight visual directions showing different ways people could
-  accomplish their tasks—not just different colors on the same screen.
-- **Choose and refine** a direction, including its branding and theme.
-  “I like this one, but make it more like X” should preserve what you chose
-  while changing what you asked to change.
-- **Try** the selected direction as a rough clickable prototype and refine it
-  through feedback before committing to detailed implementation.
-- **Carry the choices forward** into a separate process that develops the real
-  app and backend, with mocked behavior and open assumptions clearly identified.
+Give your agent this repository and an idea:
 
-Speed matters more than pixel-perfect polish at this stage. The aim is to make
-exploring alternatives easy enough that people actually do it, instead of
-settling into repeated corrections of the first generated result. Visual review
-also checks whether the tool understood the idea: people can correct missing or
-misinterpreted intent, not just choose or restyle a direction. Detail fits the
-question—lean for flow review, richer when judging branding or visual expression.
+> Use [Possibly](https://github.com/robotdad/possibly) to explore an app for tracking
+> household repairs. Read its README and agent instructions, set it up, and read
+> `possibly --help` (or `uv run possibly --help` from the checkout). Show me different
+> ways to approach the task, let me choose, then refine a clickable prototype.
 
-For the initial POC, the delivered mockup is one self-contained `.html` file
-that opens directly in a browser: no network, server, build or companion files
-are needed to try the central task. Optional explainers and decision materials
-may accompany it. Broader mockup formats are deferred. This delivery boundary
-does not require the smart tool or its authorized presentation adapter to be
-offline or single-file.
+Possibly runs as a local CLI or Python library and uses **Amplifier Agent** for its
+intelligence. Your coding agent needs permission to run local commands and access
+to a configured model provider. Installing an agent skill alone does not provide
+model credentials.
 
-Amplifier is intended to power the work underneath. Possibly is intended to be a
-library-first smart tool: every capability is callable through its public
-library, and the default CLI is only a thin adapter with no exclusive
-capability. Other agent apps and their own adapters can use that library
-without adopting an Amplifier bundle or shelling out to the Possibly CLI.
-The caller supplies context and explicitly chooses built-in dashboard,
-host-provided UI, or headless presentation. The selected built-in dashboard
-automatically starts or updates when material is ready; host UI resources remain
-host owned. Service startup, opening a viewer and taking focus follow the host's
-explicit permissions. Trying a downloaded mockup does not itself submit
-decisions to the caller.
-The handoff includes corrected intent and important choices, not just the artifact.
-The caller decides how to adopt them into its own vision or contracts; Possibly
-does not rewrite or approve those documents. The handoff preserves the selected
-experience without dictating how the production app is engineered.
+Already have this checkout? Tell your agent where it is and ask it to read
+[`AGENTS.md`](AGENTS.md) and run `uv run possibly --help` there. The command returns
+the current caller skill, including the interaction model and exact capabilities.
 
-## Project status
+## Quick start
 
-Possibly is at the direction-setting stage. This repository contains a draft
-vision, four draft behavioral contracts and a draft public API contract; there is no runnable implementation
-or installation procedure yet. The flow above describes the intended experience,
-not verified capabilities.
+Requires **Python 3.12+**, **Git**, and **uv**. The current release is a local POC,
+validated on macOS.
 
-- [Vision](docs/VISION.md)
-- [Context to Visual Choice contract](contracts/exploration.v1.md)
-- [Selected Experience Continuity contract](contracts/selection-continuity.v1.md)
-- [Calling Agent Interaction contract](contracts/caller-interaction.v1.md)
-- [Dashboard Lifecycle and Human Actions contract](contracts/dashboard-lifecycle.v1.md)
-- [Public Interaction API contract — provisional types and caller round trip](contracts/interaction-api.v1.md)
+```sh
+git clone https://github.com/robotdad/possibly.git
+cd possibly
+uv sync --extra openai
+uv run playwright install chromium
+uv run possibly --help
+```
 
-## Help shape it
+Make `OPENAI_API_KEY` available in the environment that launches your agent or
+Possibly. Then check the connection:
 
-Bring an app idea and challenge whether the choices are useful. Help distinguish
-meaningful experience alternatives, make the prototype loop fast, or connect the
-handoff to agentic development. There is room for ideas from UX, frontend
-generation and AI tooling.
+```sh
+uv run possibly provider-settings
+uv run possibly --model-env test-provider
+```
+
+OpenAI is the default. Other supported provider options include Anthropic, Gemini,
+Azure OpenAI, GitHub Copilot, ChatGPT OAuth, and compatible local endpoints. Set
+`POSSIBLY_PROVIDER` and optionally `POSSIBLY_MODEL` to choose; see
+[provider setup](src/possibly/docs/providers.md) for dependencies, environment
+variables, login, and which paths have been live-tested. The dashboard also offers
+session settings, model discovery, and connection tests.
+
+Once setup works, hand the exploration to your agent. You do not need to learn the
+JSON API to try an idea.
+
+## What the loop looks like
+
+1. **Explore.** Your agent supplies the brief. Possibly generates two or three
+   concepts, optionally using different configured providers and models.
+2. **Compare.** Browse thumbnail cards, open two live previews side by side, and
+   try their screen navigation. Design rationale stays separate from the mockup.
+3. **Choose and refine.** Each selected direction gets a focused workspace with
+   version history and feedback. Keep exploring more than one if useful.
+4. **Export.** Take a self-contained HTML prototype and a JSON handoff containing
+   the brief, choices, assumptions, and mocked behavior to your implementation agent.
+
+Tell your agent when you leave dashboard feedback. The dashboard saves submitted
+feedback and drafts, but it does **not** wake the calling agent automatically.
+Closing the browser tab also does not end a session; ask your agent to finish or stop it.
+
+## What to expect
+
+This is an exploration tool, not a production app builder. Prototypes simulate
+behavior; exports need no network or companion assets, but generating them needs a
+provider and Chromium. A passing interaction check is useful evidence, not proof
+that every control or product assumption is correct.
+
+Generation time and quality vary by model and brief. In our latest household and
+pinball trials, the first concepts arrived in 28–38 seconds and full three-concept
+batches took about 2–3 minutes. Earlier attempts failed too. The
+[trial report](docs/DIVERSITY-EVALUATION.md) records timings, critiques, and limits
+rather than promising a fixed wait. The illustration above is conceptual artwork,
+not a product screenshot.
+
+## Go deeper
+
+- [Agent usage and development workflow](AGENTS.md)
+- [Library and CLI caller guide](src/possibly/docs/caller-guide.md)
+- [Providers and settings](src/possibly/docs/providers.md)
+- [Vision](docs/VISION.md) and [draft interaction contracts](contracts/interaction-api.v1.md)
+- [Implementation notes](docs/IMPLEMENTATION.md) and [validation](docs/VALIDATION.md)
+
+Bring an app idea and challenge whether the alternatives reveal something you
+hadn’t considered. That is the most useful test of Possibly.
