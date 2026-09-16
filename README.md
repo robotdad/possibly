@@ -38,8 +38,8 @@ model access. Your coding agent’s model access is not automatically shared wit
 Ask your agent to help configure a provider; complete any required sign-in yourself.
 OpenAI is the default, with options including Anthropic, Gemini, Azure OpenAI,
 GitHub Copilot, ChatGPT OAuth, and compatible local endpoints. One installation
-supports them all, with provider components downloaded on first use. The dashboard
-also has provider settings and connection tests.
+includes the provider SDKs, with additional provider modules potentially downloaded
+on first use. The dashboard also has provider settings and connection tests.
 
 ### For the agent receiving this link
 

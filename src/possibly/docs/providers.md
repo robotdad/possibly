@@ -9,10 +9,20 @@ never silently falls back to another provider.
 ## Installation
 
 The standard Possibly installation supports every provider listed above. No
-provider-specific install extras are required. Amplifier resolves and installs the
-selected provider module and its dependencies on first use, then reuses its cache.
-Allow network access and additional setup time for that first use. Credentials or
+provider-specific install extras are required: OpenAI, Anthropic, and Google GenAI
+SDKs are installed as normal package dependencies. Runtime provider loading must
+not be relied on to install missing SDKs. Amplifier may still download provider
+modules on first use; allow network access and additional setup time. Credentials or
 OAuth authorization are still required for the selected service.
+
+If upgrading an older installation that lacks the SDKs, run
+`uv tool upgrade possibly` before retrying.
+
+Installation regression check (2026-09-16): installed the package without extras
+into a fresh isolated uv tool environment, imported all three SDKs, and mounted
+OpenAI, Anthropic, and Gemini with fresh Amplifier caches and dummy credentials.
+No model requests were made; this verifies installation and mounting, not service
+authorization or generation quality.
 
 ## Environment configuration
 

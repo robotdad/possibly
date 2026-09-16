@@ -7,9 +7,10 @@ No checkout is needed. Install Chromium with `uv tool run --from 'possibly @ git
 Run `possibly --help` and follow the skill it returns.
 
 If `possibly` is not on PATH after installation, run `uv tool update-shell` and
-start a new terminal. Python 3.12+, Git, and uv are prerequisites. Amplifier installs
-provider modules and dependencies on first use, then caches them; network access
-is required for that setup. No provider-specific install extras are needed.
+start a new terminal. Python 3.12+, Git, and uv are prerequisites. The standard install includes
+the OpenAI, Anthropic, and Google GenAI SDKs; no provider extras are needed.
+Amplifier may still download provider modules on first use, requiring network
+access. Do not rely on runtime loading to install missing SDKs.
 
 Before generation, read `possibly provider-settings` and help for `test-provider`.
 Help the user configure native environment credentials or explicitly requested
