@@ -68,7 +68,7 @@ main {
 }
 h2 {
   font:
-    500 30px Georgia,
+    500 30px var(--review-heading-font, Georgia),
     serif;
   margin: 0;
 }
@@ -184,7 +184,10 @@ iframe {
   min-height: 0;
 }
 .grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, var(--review-card-min, 420px)), 1fr)
+  );
 }
 .card .preview {
   border-radius: 0;

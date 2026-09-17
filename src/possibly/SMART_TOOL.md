@@ -209,3 +209,9 @@ Generated prototypes remain self-contained HTML in isolated previews. A host mus
 support the custom preview component, keep provider/viewer credentials outside the
 surface, and own its execution and notification policies. Rendering a surface costs
 no model calls. Answering an existing question may continue its authorized operation.
+
+Embedded hosts can request `review_surface(..., profile="comparison")` for a
+comparison-first review with local shortlisting and an `onDiscuss` callback. The
+default `workspace` profile retains dashboard feedback. Both use the same library
+decisions and exact HTML exports. A typed npm renderer artifact can be built from
+`web/`; hosts pin its integrity with the compatible library commit.

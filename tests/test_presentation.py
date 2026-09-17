@@ -279,7 +279,7 @@ def test_large_preview_uses_full_dialog_width_from_concepts_and_history(tmp_path
         page = browser.new_page(viewport={"width": 1440, "height": 1000})
         mount_host(page, p, eid)
 
-        def check_large_preview():
+        def check_large_preview(invoker):
             dialog = page.get_by_role("dialog", name="Interactive concept preview")
             expect(dialog).to_be_visible()
             expect(dialog.locator("iframe")).to_have_count(1)
@@ -287,21 +287,36 @@ def test_large_preview_uses_full_dialog_width_from_concepts_and_history(tmp_path
             stage = dialog.locator(".preview-stage")
             expect(stage).to_be_visible()
             assert stage.bounding_box()["width"] >= dialog.bounding_box()["width"] - 44
-            dialog.get_by_role("button", name="Back to concepts").click()
+            dialog.get_by_role("button", name="Back to concepts").press("Escape")
             expect(dialog).to_have_count(0)
+            expect(invoker).to_be_focused()
 
         page.get_by_role("button", name="Open preview", exact=True).first.click()
-        check_large_preview()
+        check_large_preview(page.get_by_role("button", name="Open preview", exact=True).first)
         page.get_by_role("button", name="Choose this direction").first.click()
         page.get_by_role("button", name="Open large preview", exact=True).click()
-        check_large_preview()
+        check_large_preview(page.get_by_role("button", name="Open large preview", exact=True))
         p.refine(eid, rid, "Keep claiming", request_id="refine", grant=Grant(actions=("refine",)))
         page.evaluate("review.refresh()")
         page.get_by_label("Version history").select_option(rid)
         expect(page.get_by_text("Earlier version", exact=True)).to_be_visible()
         page.get_by_role("button", name="Open large preview", exact=True).click()
-        check_large_preview()
+        check_large_preview(page.get_by_role("button", name="Open large preview", exact=True))
         page.set_viewport_size({"width": 390, "height": 844})
         page.get_by_role("button", name="Open large preview", exact=True).click()
-        check_large_preview()
+        check_large_preview(page.get_by_role("button", name="Open large preview", exact=True))
         browser.close()
+
+
+def test_comparison_profile_keeps_distinctions_and_discussion_local(tmp_path):
+    p = Possibly(tmp_path, intelligence=FakeIntelligence())
+    eid, rid = started(p)
+    result = p.review_surface(eid, profile="comparison")
+    nodes = result["messages"][2]["updateComponents"]["components"]
+    by_id = {c["id"]: c for c in nodes}
+    assert "overall" not in by_id["root"]["children"]
+    assert by_id[rid + "-tradeoff"]["text"].startswith("Tradeoff")
+    assert by_id[rid + "-discuss"]["action"]["event"]["context"]["revision_id"] == rid
+    assert not p.review_snapshot(eid)["decisions"]
+    with pytest.raises(PossiblyError):
+        p.review_surface(eid, profile="unknown")

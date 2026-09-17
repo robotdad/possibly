@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "check": "prettier --check *.js *.mjs *.css package.json"
+    "check": "prettier --check *.js *.mjs *.css package.json",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "@a2ui/lit": "0.10.3",
@@ -16,5 +17,16 @@
     "esbuild": "0.25.12",
     "prettier": "3.8.4",
     "zod-to-json-schema": "3.25.2"
-  }
+  },
+  "version": "0.1.0",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/review.d.ts",
+      "import": "./dist/review.js"
+    }
+  },
+  "types": "./dist/review.d.ts"
 }

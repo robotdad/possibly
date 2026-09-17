@@ -390,7 +390,7 @@ const theme = `
   --a2ui-color-secondary-hover:var(--soft,#e9eee3);--a2ui-color-primary-hover:var(--accent,#294f3d);
   --a2ui-color-border:var(--line,#d7dcd0);--a2ui-text-caption-color:var(--muted,#5b685d);
   --a2ui-button-margin:0;--a2ui-button-padding:9px 14px;--a2ui-button-border-radius:7px;
-  --a2ui-font-family-title:Georgia,serif;--a2ui-column-gap:18px;--a2ui-font-size-xl:30px;--a2ui-font-size-l:22px;
+  --a2ui-font-family-title:var(--review-heading-font,Georgia,serif);--a2ui-column-gap:18px;--a2ui-font-size-xl:30px;--a2ui-font-size-l:22px;
   --a2ui-font-size-m:16px;--a2ui-font-size-s:14px;--a2ui-font-size-xs:12px}
 `;
 class ReviewSurface extends A2uiSurface {
@@ -408,7 +408,8 @@ export function mountReview(container, options) {
     again = false,
     snapshot,
     surface,
-    element;
+    element,
+    previewInvoker;
   let view = { ...options.initialView },
     sequence = Date.now(),
     saveChain = Promise.resolve(),
@@ -442,6 +443,7 @@ export function mountReview(container, options) {
     { version: "v0.9.1" },
   );
   const localNames = new Set([
+    "discuss",
     "navigate",
     "version",
     "focus",
@@ -545,7 +547,16 @@ export function mountReview(container, options) {
     if (disposed) return;
     const c = action.context || {},
       name = action.name;
+    if (name === "discuss") {
+      options.onDiscuss?.(c);
+      return;
+    }
     if (localNames.has(name)) {
+      if (name === "preview" || name === "compare") {
+        previewInvoker = document.activeElement;
+        while (previewInvoker?.shadowRoot?.activeElement)
+          previewInvoker = previewInvoker.shadowRoot.activeElement;
+      }
       if (name === "navigate")
         view = {
           ...view,
@@ -567,6 +578,10 @@ export function mountReview(container, options) {
         view = { ...view, comparing: [...ids] };
       }
       await refresh();
+      if (name === "close_preview")
+        requestAnimationFrame(() => {
+          if (!disposed && previewInvoker?.isConnected) previewInvoker.focus();
+        });
       if (name === "navigate" || name === "version") await rememberView();
       return;
     }

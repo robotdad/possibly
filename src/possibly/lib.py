@@ -452,15 +452,16 @@ class Possibly:
 
         return review_catalog()
 
-    def review_surface(self, exploration_id, *, view=None, reviewer_id="default"):
+    def review_surface(self, exploration_id, *, view=None, reviewer_id="default", profile="workspace"):
         """Project an A2UI v0.9.1 review surface; no HTML, credentials, or model calls.
 
         view: direction_id, revision_id, comparing/preview revision lists, focused.
+        profile: workspace (dashboard) or comparison (embedded review and discussion).
         A full replay includes catalog identity, messages, resolved view, and version.
         """
         from .presentation import present
 
-        return present(self, exploration_id, view, reviewer_id)
+        return present(self, exploration_id, view, reviewer_id, profile)
 
     def review_action(self, exploration_id, action, *, request_id, reviewer_id="default", sequence=0):
         """Route review actions to public operations, retaining retries and exact revision targets.

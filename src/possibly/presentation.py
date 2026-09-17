@@ -18,8 +18,10 @@ def surface_id(state):
     return f"possibly-{state['id']}-{state['active_period_id']}"
 
 
-def present(client, exploration_id, view=None, reviewer_id="default"):
+def present(client, exploration_id, view=None, reviewer_id="default", profile="workspace"):
     """Return a complete replayable surface. Hosts may diff components/data between reads."""
+    if profile not in {"workspace", "comparison"}:
+        raise PossiblyError("invalid_profile", "Choose workspace or comparison presentation.")
     state = client.get_exploration(exploration_id)
     view = {} if view is None else view
     if not isinstance(view, dict) or set(view) - {
@@ -259,6 +261,15 @@ def present(client, exploration_id, view=None, reviewer_id="default"):
         for rev in revisions.values():
             if rev["parent"]:
                 continue
+            if profile == "comparison":
+                rev = next(
+                    (
+                        candidate
+                        for candidate in reversed(list(revisions.values()))
+                        if candidate["direction_id"] == rev["direction_id"] and not candidate["superseded"]
+                    ),
+                    rev,
+                )
             rid = rev["id"]
             prov = rev.get("provenance", {})
             thumb = node(
@@ -268,6 +279,8 @@ def present(client, exploration_id, view=None, reviewer_id="default"):
                 title=rev["name"],
                 action=event("preview", revision_id=rid),
             )
+            if profile == "comparison":
+                thumb = prototype(rev, rid + "-inline")
             content = [
                 text(rid + "-name", rev["name"], "h3"),
                 text(
@@ -440,9 +453,69 @@ def present(client, exploration_id, view=None, reviewer_id="default"):
                 "Interactive concept preview",
             )
         )
+    if profile == "comparison":
+        by_id = {c["id"]: c for c in components}
+        if direction == "compare":
+            by_id["compare-title"]["text"] = "Compare the organizing ideas"
+            by_id["compare-help"]["text"] = "Inspect, shortlist and discuss before choosing a direction."
+            by_id["compare-count"]["text"] = f"Shortlist · {len(comparing)} of 2"
+            for rev in revisions.values():
+                rid = rev["id"]
+                content = by_id.get(rid + "-content")
+                if not content:
+                    continue
+                content["children"] = [
+                    rid + "-name",
+                    text(
+                        rid + "-selection",
+                        "Selected draft" if rev["direction_id"] in chosen else "Draft alternative",
+                        "caption",
+                    ),
+                    text(rid + "-idea", "Distinctive idea · " + rev["approach"]),
+                    text(rid + "-tradeoff", "Tradeoff · " + rev["tradeoff"]),
+                    text(
+                        rid + "-test",
+                        "Question to test · "
+                        + (
+                            rev.get("task_model", {}).get("user_question")
+                            or "Does this organizing idea help you complete the task?"
+                        ),
+                    ),
+                    rid + "-actions",
+                    rid + "-about" if rid + "-about" in by_id else rid + "-name",
+                ]
+                by_id[rid + "-compare-label"]["text"] = (
+                    "Remove from shortlist" if rid in comparing else "Shortlist"
+                )
+                by_id[rid + "-actions"]["children"].insert(
+                    1, button(rid + "-discuss", "Discuss this", "discuss", revision_id=rid, title=rev["name"])
+                )
+            secondary = [i for i in root if i in {"brief", "progress"}]
+            root = [i for i in root if i not in {"overall", "brief", "progress"}]
+            root.extend(secondary)
+        else:
+            by_id["workspace"]["kind"] = "stack"
+            by_id["sidebar"]["children"] = [
+                "version-label",
+                text("selection-boundary", "Selected draft · not accepted or verified"),
+                current_rid + "-about",
+                "exports",
+            ]
+            by_id["workspace-heading"]["children"].remove("focus")
+            root.insert(
+                1,
+                button(
+                    "discuss-current",
+                    "Discuss this version",
+                    "discuss",
+                    revision_id=current_rid,
+                    title=revisions[current_rid]["name"],
+                ),
+            )
     node("root", "Column", children=root)
     data = {"drafts": dict(saved.get("drafts", {})), "answers": {}}
     return {
+        "profile": profile,
         "protocol": PROTOCOL,
         "catalog_id": CATALOG,
         "surface_id": sid,

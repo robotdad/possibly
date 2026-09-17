@@ -1,5 +1,11 @@
 import { build } from "esbuild";
-import { writeFile, readFile, readdir } from "node:fs/promises";
+import {
+  writeFile,
+  readFile,
+  readdir,
+  mkdir,
+  copyFile,
+} from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 process.chdir(fileURLToPath(new URL("..", import.meta.url)));
@@ -73,3 +79,17 @@ await build({
     ) + "\n",
   );
 });
+
+// The same built renderer serves Python hosts and portable frontend consumers.
+await mkdir("web/dist", { recursive: true });
+for (const name of [
+  "review.js",
+  "review.js.LEGAL.txt",
+  "THIRD_PARTY_NOTICES.txt",
+  "build.json",
+  "review-catalog.json",
+]) {
+  await copyFile("src/possibly/static/" + name, "web/dist/" + name);
+}
+
+await copyFile("web/review.d.ts", "web/dist/review.d.ts");

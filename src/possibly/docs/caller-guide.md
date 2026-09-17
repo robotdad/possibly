@@ -136,7 +136,7 @@ exports retain their existing format. The A2UI prototype-generation idea is defe
 - `Possibly.review_catalog()` / `possibly review-catalog` returns the supported
   protocol (`v0.9.1`), catalog ID, and inline component schemas without a store or
   provider. The catalog ID is an identity, not an endpoint to fetch at runtime.
-- `review_surface(exploration_id, view=..., reviewer_id=...)` returns a complete
+- `review_surface(exploration_id, view=..., reviewer_id=..., profile="workspace")` returns a complete
   replay: create surface, initial data, component definitions. It includes the
   resolved view, reviewed revision, lifecycle, state version, and observation cursor.
   It projects review data rather than exposing runner credentials, grants, provider
@@ -157,7 +157,25 @@ IDs each), and `focused`. View changes are presentation state, never selection.
 Drafts are private to the supplied reviewer ID in this projection. Reviewer IDs
 identify autosave streams; they are not authentication or multi-user authorization.
 
+The optional `comparison` profile presents the latest revision of each direction,
+its distinctive idea, tradeoff and question to test. Shortlisting and previewing are
+local presentation state. `Discuss this` emits the exact revision context through
+`onDiscuss`; the host owns its conversation and message sending. Selection remains
+an explicit library decision. The default `workspace` profile keeps the dashboard
+review and feedback tools. Neither profile changes prototype HTML or grants
+generation authority. Unknown profiles are refused.
+
 ### Embedding
+
+Frontend hosts can also consume the identical bundled renderer as a local npm
+artifact. From a checkout, run `npm ci --prefix web`, then
+`npm pack ./web --pack-destination .work` (create `.work` first). The tarball
+exports `mountReview` from `possibly-review-workspace` and includes the catalog,
+build metadata and third-party license notices. This is a private, locally built
+package, not a published registry dependency. Pin the tarball integrity and its
+source commit alongside the compatible Python library. Import it only in a browser;
+it registers custom elements. Packing rebuilds both the Python asset and tarball
+from the same entry point.
 
 Ship `static/review.js` from the installed Possibly package through the host's
 asset mechanism and import its `mountReview(container, options)` export. Supply:
@@ -182,7 +200,9 @@ Bind them to the public library through your application's bridge. The package
 includes all browser dependencies; Node is needed only to rebuild frontend assets.
 The Python library still needs an execution host. A2UI does not provide that bridge.
 
-`initialView`, `onSnapshot`, and `pollInterval` are optional. The default poll interval
+`initialView`, `onSnapshot`, `onDiscuss`, and `pollInterval` are optional.
+A host may add a local `discuss` action to its presentation; `onDiscuss(context)`
+receives that context without a library write, message send, or selection. The default poll interval
 is two seconds; `refresh()` allows immediate observation. The renderer diffs component
 updates and retains the surface data model. It hydrates persisted drafts once per
 surface and lets local typing own drafts until submission. Concurrent independent
