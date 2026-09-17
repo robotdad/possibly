@@ -56,6 +56,10 @@ def main(argv=None):
             raise PossiblyError("invalid_input", "Input must be a JSON object.")
         if method in {"manifest", "capabilities", "skill"}:
             result = {"manifest": manifest, "capabilities": capabilities, "skill": skill}[method]()
+        elif method == "review_catalog":
+            from .presentation import review_catalog
+
+            result = review_catalog()
         elif method in {
             "provider_models",
             "provider_settings",

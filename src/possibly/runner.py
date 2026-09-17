@@ -156,6 +156,12 @@ def serve(client, eid):
                 return self.send(
                     Path(__file__).with_name("dashboard.html").read_text(), content_type="text/html"
                 )
+            if self.path in {"/static/review.js", "/static/review.js.LEGAL.txt"}:
+                name = self.path.rsplit("/", 1)[-1]
+                return self.send(
+                    (Path(__file__).with_name("static") / name).read_text(),
+                    content_type="text/javascript" if name.endswith(".js") else "text/plain",
+                )
             if not self.authorized():
                 return self.send({"error": "unauthorized"}, 401)
             if self.path == "/settings":
@@ -193,7 +199,20 @@ def serve(client, eid):
                 if not 0 < length < 100_000:
                     return self.send({"error": "invalid_body"}, 400)
                 data = json.loads(self.rfile.read(length))
-                if self.path == "/settings":
+                if not isinstance(data, dict):
+                    return self.send({"error": "invalid_request"}, 400)
+                if self.path == "/review/surface":
+                    result = client.review_surface(eid, **data)
+                elif self.path == "/review/action":
+                    from .lib import Possibly
+
+                    observer = Possibly(client.store.root, caller="dashboard")
+                    result = observer.review_action(eid, **data)
+                elif self.path == "/review/artifact":
+                    result = {"html": client.read_artifact(eid, data["revision_id"])}
+                elif self.path == "/review/thumbnail":
+                    result = {"thumbnail": client.get_revision(eid, data["revision_id"]).get("thumbnail")}
+                elif self.path == "/settings":
                     if any(
                         o["state"] in {"queued", "running"}
                         for o in client.store.get(eid)["operations"].values()

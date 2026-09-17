@@ -1,0 +1,513 @@
+{
+  "v0.9.1": {
+    "supportedCatalogIds": [
+      "https://github.com/robotdad/possibly/catalogs/review-v1.json"
+    ],
+    "inlineCatalogs": [
+      {
+        "catalogId": "https://github.com/robotdad/possibly/catalogs/review-v1.json",
+        "components": {
+          "Button": {
+            "allOf": [
+              {
+                "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "component": {
+                    "const": "Button"
+                  },
+                  "accessibility": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/AccessibilityAttributes"
+                  },
+                  "weight": {
+                    "type": "number",
+                    "description": "The relative weight of this component within a Row or Column. This is similar to the CSS 'flex-grow' property. Note: this may ONLY be set when the component is a direct descendant of a Row or Column."
+                  },
+                  "child": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentId"
+                  },
+                  "variant": {
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "primary",
+                      "borderless"
+                    ],
+                    "default": "default",
+                    "description": "A hint for the button style. If omitted, a default button style is used. 'primary' indicates this is the main call-to-action button. 'borderless' means the button has no visual border or background, making its child content appear like a clickable link."
+                  },
+                  "action": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/Action"
+                  },
+                  "checks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/CheckRule"
+                    },
+                    "description": "A list of checks to perform."
+                  },
+                  "isValid": {
+                    "type": "boolean",
+                    "description": "Whether the checks currently pass."
+                  },
+                  "validationErrors": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Current validation error messages."
+                  }
+                },
+                "required": [
+                  "component",
+                  "child"
+                ]
+              }
+            ],
+            "unevaluatedProperties": false
+          },
+          "Column": {
+            "allOf": [
+              {
+                "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "component": {
+                    "const": "Column"
+                  },
+                  "accessibility": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/AccessibilityAttributes"
+                  },
+                  "weight": {
+                    "type": "number",
+                    "description": "The relative weight of this component within a Row or Column. This is similar to the CSS 'flex-grow' property. Note: this may ONLY be set when the component is a direct descendant of a Row or Column."
+                  },
+                  "children": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ChildList"
+                  },
+                  "justify": {
+                    "type": "string",
+                    "enum": [
+                      "start",
+                      "center",
+                      "end",
+                      "spaceBetween",
+                      "spaceAround",
+                      "spaceEvenly",
+                      "stretch"
+                    ],
+                    "default": "start",
+                    "description": "Defines the arrangement of children along the main axis (vertically). Use 'spaceBetween' to push items to the edges (e.g. header at top, footer at bottom), or 'start'/'end'/'center' to pack them together."
+                  },
+                  "align": {
+                    "type": "string",
+                    "enum": [
+                      "center",
+                      "end",
+                      "start",
+                      "stretch"
+                    ],
+                    "default": "stretch",
+                    "description": "Defines the alignment of children along the cross axis (horizontally). This is similar to the CSS 'align-items' property."
+                  }
+                },
+                "required": [
+                  "component",
+                  "children"
+                ],
+                "description": "A layout component that arranges its children vertically. To create a grid layout, nest Rows within this Column."
+              }
+            ],
+            "unevaluatedProperties": false
+          },
+          "Row": {
+            "allOf": [
+              {
+                "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "component": {
+                    "const": "Row"
+                  },
+                  "accessibility": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/AccessibilityAttributes"
+                  },
+                  "weight": {
+                    "type": "number",
+                    "description": "The relative weight of this component within a Row or Column. This is similar to the CSS 'flex-grow' property. Note: this may ONLY be set when the component is a direct descendant of a Row or Column."
+                  },
+                  "children": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ChildList"
+                  },
+                  "justify": {
+                    "type": "string",
+                    "enum": [
+                      "center",
+                      "end",
+                      "spaceAround",
+                      "spaceBetween",
+                      "spaceEvenly",
+                      "start",
+                      "stretch"
+                    ],
+                    "default": "start",
+                    "description": "Defines the arrangement of children along the main axis (horizontally). Use 'spaceBetween' to push items to the edges, or 'start'/'end'/'center' to pack them together."
+                  },
+                  "align": {
+                    "type": "string",
+                    "enum": [
+                      "start",
+                      "center",
+                      "end",
+                      "stretch"
+                    ],
+                    "default": "stretch",
+                    "description": "Defines the alignment of children along the cross axis (vertically). This is similar to the CSS 'align-items' property, but uses camelCase values (e.g., 'start')."
+                  }
+                },
+                "required": [
+                  "component",
+                  "children"
+                ],
+                "description": "A layout component that arranges its children horizontally. To create a grid layout, nest Columns within this Row."
+              }
+            ],
+            "unevaluatedProperties": false
+          },
+          "Card": {
+            "allOf": [
+              {
+                "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "component": {
+                    "const": "Card"
+                  },
+                  "accessibility": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/AccessibilityAttributes"
+                  },
+                  "weight": {
+                    "type": "number",
+                    "description": "The relative weight of this component within a Row or Column. This is similar to the CSS 'flex-grow' property. Note: this may ONLY be set when the component is a direct descendant of a Row or Column."
+                  },
+                  "child": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentId"
+                  }
+                },
+                "required": [
+                  "component",
+                  "child"
+                ]
+              }
+            ],
+            "unevaluatedProperties": false
+          },
+          "Text": {
+            "allOf": [
+              {
+                "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "component": {
+                    "const": "Text"
+                  },
+                  "accessibility": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/AccessibilityAttributes"
+                  },
+                  "weight": {
+                    "type": "number",
+                    "description": "The relative weight of this component within a Row or Column. This is similar to the CSS 'flex-grow' property. Note: this may ONLY be set when the component is a direct descendant of a Row or Column."
+                  },
+                  "text": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DataBinding"
+                      },
+                      {
+                        "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/FunctionCall"
+                      }
+                    ],
+                    "description": "The text content to display. While simple Markdown formatting is supported (i.e. without HTML, images, or links), utilizing dedicated UI components is generally preferred for a richer and more structured presentation."
+                  },
+                  "variant": {
+                    "type": "string",
+                    "enum": [
+                      "h1",
+                      "h2",
+                      "h3",
+                      "h4",
+                      "h5",
+                      "caption",
+                      "body"
+                    ],
+                    "default": "body",
+                    "description": "A hint for the base text style."
+                  }
+                },
+                "required": [
+                  "component",
+                  "text"
+                ]
+              }
+            ],
+            "unevaluatedProperties": false
+          },
+          "ReviewLayout": {
+            "allOf": [
+              {
+                "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "component": {
+                    "const": "ReviewLayout"
+                  },
+                  "children": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ChildList"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "stack",
+                      "actions",
+                      "tabs",
+                      "details",
+                      "panel",
+                      "overall",
+                      "card",
+                      "content",
+                      "grid",
+                      "workspace",
+                      "focused",
+                      "compare",
+                      "dialog"
+                    ]
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "expanded": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "component",
+                  "children",
+                  "kind"
+                ]
+              }
+            ],
+            "unevaluatedProperties": false
+          },
+          "ReviewInput": {
+            "allOf": [
+              {
+                "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "component": {
+                    "const": "ReviewInput"
+                  },
+                  "label": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString"
+                  },
+                  "value": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString"
+                  },
+                  "disabled": {
+                    "type": "boolean"
+                  },
+                  "onChange": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/Action"
+                  }
+                },
+                "required": [
+                  "component",
+                  "label",
+                  "value",
+                  "disabled"
+                ]
+              }
+            ],
+            "unevaluatedProperties": false
+          },
+          "ReviewTab": {
+            "allOf": [
+              {
+                "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "component": {
+                    "const": "ReviewTab"
+                  },
+                  "label": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "action": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/Action"
+                  }
+                },
+                "required": [
+                  "component",
+                  "label",
+                  "selected",
+                  "action"
+                ]
+              }
+            ],
+            "unevaluatedProperties": false
+          },
+          "RevisionPicker": {
+            "allOf": [
+              {
+                "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "component": {
+                    "const": "RevisionPicker"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "options": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "label"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "component",
+                  "label",
+                  "value",
+                  "options"
+                ]
+              }
+            ],
+            "unevaluatedProperties": false
+          },
+          "PrototypePreview": {
+            "allOf": [
+              {
+                "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "component": {
+                    "const": "PrototypePreview"
+                  },
+                  "revisionId": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "width": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "height": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "colorScheme": {
+                    "type": "string",
+                    "enum": [
+                      "light",
+                      "dark"
+                    ]
+                  },
+                  "onExpand": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/Action"
+                  }
+                },
+                "required": [
+                  "component",
+                  "revisionId",
+                  "title",
+                  "width",
+                  "height",
+                  "colorScheme",
+                  "onExpand"
+                ]
+              }
+            ],
+            "unevaluatedProperties": false
+          },
+          "RevisionThumbnail": {
+            "allOf": [
+              {
+                "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "component": {
+                    "const": "RevisionThumbnail"
+                  },
+                  "revisionId": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/Action"
+                  }
+                },
+                "required": [
+                  "component",
+                  "revisionId",
+                  "title",
+                  "action"
+                ]
+              }
+            ],
+            "unevaluatedProperties": false
+          }
+        },
+        "functions": []
+      }
+    ]
+  }
+}

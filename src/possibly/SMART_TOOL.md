@@ -35,7 +35,7 @@ Install its browser with `uv tool run --from 'possibly @ git+https://github.com/
 Run `possibly --help` from any working directory. If needed, run `uv tool update-shell` and open a new terminal.
 The standard install includes the OpenAI, Anthropic, and Google GenAI SDKs. Do not rely on runtime provider loading to install missing SDKs. Amplifier may still download provider modules on first use, requiring network access.
 For development in a checkout, run `uv sync --extra dev`, then `uv run playwright install chromium`.
-Add the anthropic extra when using Anthropic. Generation embeds Amplifier Agent v0.17.0 in-process;
+Generation embeds Amplifier Agent v0.17.0 in-process;
 there is no Possibly-owned model credential store. `--model-env` explicitly opts into
 environment credentials, e.g. ANTHROPIC_API_KEY or OPENAI_API_KEY. Pass `--provider`
 and optionally `--model` / `--reasoning-effort` to choose them. OpenAI is the default;
@@ -197,3 +197,15 @@ Previews retain the captured viewport and color scheme, with fit-to-panel or act
 viewing. Mark two concepts and open the separate side-by-side comparison to compare;
 choose a direction only when ready to create its refinement workspace. Overall
 feedback is separate from feedback on a specific concept.
+
+## Embed the review experience
+
+The built-in dashboard uses a shared A2UI v0.9.1 review presenter. Use `review-catalog`
+(no store/provider) to discover its component schemas, `review-surface` to obtain a
+replayable description, and `review-action` to route review input through the library.
+The shipped browser renderer accepts injected host IO callbacks; it needs no CDN or
+Node runtime. See [shared review workspace integration](docs/caller-guide.md#shared-a2ui-review-workspace).
+Generated prototypes remain self-contained HTML in isolated previews. A host must
+support the custom preview component, keep provider/viewer credentials outside the
+surface, and own its execution and notification policies. Rendering a surface costs
+no model calls. Answering an existing question may continue its authorized operation.

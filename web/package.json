@@ -1,0 +1,20 @@
+{
+  "name": "possibly-review-workspace",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "prettier --check *.js *.mjs *.css package.json"
+  },
+  "dependencies": {
+    "@a2ui/lit": "0.10.3",
+    "@a2ui/web_core": "0.10.7",
+    "lit": "3.3.3",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "prettier": "3.8.4",
+    "zod-to-json-schema": "3.25.2"
+  }
+}

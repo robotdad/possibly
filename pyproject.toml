@@ -16,7 +16,7 @@ dependencies = [
 # Preserve older install commands; these SDKs are now included by default.
 anthropic = ["anthropic>=0.70"]
 openai = ["openai>=1.0"]
-dev = ["pytest>=8", "ruff>=0.12"]
+dev = ["pytest>=8", "ruff>=0.12", "jsonschema>=4.25,<5"]
 [project.scripts]
 possibly = "possibly.cli:main"
 [project.urls]

@@ -1,0 +1,9 @@
+{
+  "entry": "web/review.js",
+  "dependencies": {
+    "@a2ui/lit": "0.10.3",
+    "@a2ui/web_core": "0.10.7",
+    "lit": "3.3.3"
+  },
+  "bytes": 264238
+}

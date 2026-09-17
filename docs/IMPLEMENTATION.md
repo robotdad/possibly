@@ -84,3 +84,34 @@ There is no separate repeated screenshot-review execution loop. `artifacts.py`
 provides outcome assertions and allows one browser process to serve isolated checks.
 `finalize_operation` is a public, deterministic checkpoint publication operation.
 It does not repair artifacts or invent missing review evidence.
+
+## A2UI review workspace experiment
+
+`presentation.py` projects the public exploration snapshot into A2UI v0.9.1 and
+routes a bounded set of review actions to existing library operations. The built-in
+runner supplies authenticated transport and lazy artifact/thumbnail delivery.
+`web/review.js` supplies the host-independent `mountReview` adapter and catalog
+components; the pinned upstream MessageProcessor and Lit renderer own A2UI binding
+and rendering. `dashboard.html` retains host provider settings and appearance.
+
+The frontend is rebuilt with `npm ci --prefix web --ignore-scripts` followed by
+`npm run --prefix web build`; `npm run --prefix web check` checks source formatting.
+Commit the generated files under `src/possibly/static/` with source changes so
+Python installations need neither Node nor network access to view a workspace.
+The lockfile pins transitive dependencies. The build includes license notices and
+a generated component catalog. No A2UI SDK is needed in the Python runtime.
+
+Pinned packages are `@a2ui/lit` 0.10.3 and `@a2ui/web_core` 0.10.7. The protocol is
+v0.9.1, not the similarly numbered npm package. Lit 0.10.4 is deprecated upstream;
+0.10.3 uses the controller API covered by our browser tests. The custom Text
+implementation uses the standard schema but native escaped text/headings, avoiding
+the older renderer's dependence on an optional Markdown provider for heading semantics.
+The catalog generator avoids dangling local references in the upstream inline schema
+exporter by generating expanded Zod schemas and restoring A2UI common-type references.
+
+Tests validate gallery, comparison, workspace and question messages against pinned
+upstream protocol schemas, exercise action consistency, and run the same renderer in
+an independently bridged host. Browser checks cover preview isolation, preservation
+of state during updates, drafts, questions, correction, revision targeting, and export.
+The draft dashboard/selection contracts still apply. A2UI prototype generation remains
+deferred, consistent with the initial standalone-HTML contract.

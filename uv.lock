@@ -853,6 +853,7 @@ anthropic = [
     { name = "anthropic" },
 ]
 dev = [
+    { name = "jsonschema" },
     { name = "pytest" },
     { name = "ruff" },
 ]
@@ -866,6 +867,7 @@ requires-dist = [
     { name = "anthropic", specifier = ">=0.70" },
     { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.70" },
     { name = "google-genai", specifier = ">=1.0" },
+    { name = "jsonschema", marker = "extra == 'dev'", specifier = ">=4.25,<5" },
     { name = "openai", specifier = ">=1.0" },
     { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0" },
     { name = "playwright", specifier = ">=1.50,<2" },

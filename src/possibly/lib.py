@@ -445,6 +445,34 @@ class Possibly:
             "selected_revision": state["selected_revision"],
         }
 
+    @staticmethod
+    def review_catalog():
+        """Return A2UI v0.9.1 renderer capabilities and the shipped review component schemas."""
+        from .presentation import review_catalog
+
+        return review_catalog()
+
+    def review_surface(self, exploration_id, *, view=None, reviewer_id="default"):
+        """Project an A2UI v0.9.1 review surface; no HTML, credentials, or model calls.
+
+        view: direction_id, revision_id, comparing/preview revision lists, focused.
+        A full replay includes catalog identity, messages, resolved view, and version.
+        """
+        from .presentation import present
+
+        return present(self, exploration_id, view, reviewer_id)
+
+    def review_action(self, exploration_id, action, *, request_id, reviewer_id="default", sequence=0):
+        """Route review actions to public operations, retaining retries and exact revision targets.
+
+        draft/select/reject/feedback/brief_correction/export are deterministic.
+        answer can continue an existing authorized operation when intelligence is bound.
+        Local navigation actions belong to the host and are not accepted here.
+        """
+        from .presentation import dispatch
+
+        return dispatch(self, exploration_id, action, request_id, reviewer_id, sequence)
+
     def get_revision(self, exploration_id, revision_id):
         rev = self._revision(self.store.get(exploration_id), revision_id)
         return {k: v for k, v in rev.items() if k != "html"}

@@ -31,7 +31,7 @@ for exact signatures. Library calls are synchronous; async hosts can use a worke
 
 Provider requests and login require explicit `allow_environment=True` / `--model-env`; settings reads expose presence only.
 OpenAI is the default. See [providers and settings](providers.md) for all nine providers, environment variables, process-only overrides, connection tests and OAuth/GitHub login.
-Install the corresponding extra. No credential values are serialized into records.
+Provider SDKs are included in the standard install. No credential values are serialized into records.
 For an installed tool, install Chromium with `uv tool run --from 'possibly @ git+https://github.com/robotdad/possibly' playwright install chromium`.
 Developers in a checkout can use `uv run playwright install chromium`.
 The generation adapter mounts only write_candidate, patch_candidate, read_candidate, inspect_candidate and submit_result. Chromium
@@ -126,3 +126,80 @@ Previews retain the captured viewport and color scheme, with fit-to-panel or act
 viewing. Mark two concepts and open the separate side-by-side comparison to compare;
 choose a direction only when ready to create its refinement workspace. Overall
 feedback is separate from feedback on a specific concept.
+
+## Shared A2UI review workspace
+
+The built-in dashboard now mounts the same deterministic A2UI presenter available
+for host applications. This is a review UI change; generated prototypes and HTML
+exports retain their existing format. The A2UI prototype-generation idea is deferred.
+
+- `Possibly.review_catalog()` / `possibly review-catalog` returns the supported
+  protocol (`v0.9.1`), catalog ID, and inline component schemas without a store or
+  provider. The catalog ID is an identity, not an endpoint to fetch at runtime.
+- `review_surface(exploration_id, view=..., reviewer_id=...)` returns a complete
+  replay: create surface, initial data, component definitions. It includes the
+  resolved view, reviewed revision, lifecycle, state version, and observation cursor.
+  It projects review data rather than exposing runner credentials, grants, provider
+  settings, prototype HTML, or thumbnail bytes. Diagnostics can change between
+  reads without changing the design state version.
+- `review_action(exploration_id, action, request_id=..., reviewer_id=..., sequence=...)`
+  routes an A2UI action object through public domain methods. It accepts `draft`,
+  `select`, `reject`, `feedback`, `brief_correction`, `answer`, and `export`.
+  Decisions require their reviewed `expected_state_version`. Empty revision ID
+  means overall feedback. Unsupported actions and old active-period surfaces fail.
+  `answer` can continue an existing authorized operation when intelligence is
+  attached; other review actions do not run a model. Selection may queue an already
+  authorized one-use continuation, as with `record_decision`.
+
+View fields are `direction_id` (`compare` or a selected direction ID), optional
+`revision_id` (empty follows latest), `comparing` and `preview` (up to two revision
+IDs each), and `focused`. View changes are presentation state, never selection.
+Drafts are private to the supplied reviewer ID in this projection. Reviewer IDs
+identify autosave streams; they are not authentication or multi-user authorization.
+
+### Embedding
+
+Ship `static/review.js` from the installed Possibly package through the host's
+asset mechanism and import its `mountReview(container, options)` export. Supply:
+
+```javascript
+const workspace = mountReview(element, {
+  reviewerId: stableReviewerId,
+  loadSurface: view => host.reviewSurface({view, reviewer_id: stableReviewerId}),
+  sendAction: request => host.reviewAction(request),
+  loadArtifact: revision_id => host.readArtifact(revision_id), // {html}
+  loadThumbnail: revision_id => host.readThumbnail(revision_id), // {thumbnail}
+  onNotice: message => showStatus(message),
+  onSaveStatus: message => showDraftStatus(message),
+  onExport: ({format, body, revisionId}) => host.saveExport(format, body, revisionId),
+});
+// Stops polling and unmounts this view; does not stop the exploration.
+workspace.dispose();
+```
+
+The callbacks are host adapter functions, not additional Possibly method names.
+Bind them to the public library through your application's bridge. The package
+includes all browser dependencies; Node is needed only to rebuild frontend assets.
+The Python library still needs an execution host. A2UI does not provide that bridge.
+
+`initialView`, `onSnapshot`, and `pollInterval` are optional. The default poll interval
+is two seconds; `refresh()` allows immediate observation. The renderer diffs component
+updates and retains the surface data model. It hydrates persisted drafts once per
+surface and lets local typing own drafts until submission. Concurrent independent
+reviewers should use distinct reviewer IDs. Artifacts and thumbnails are lazy-loaded
+and cached per mounted workspace. Question-answer drafts are local until submitted.
+
+Use `examples/embedded_review.py STORE EXPLORATION_ID` from a checkout for a second,
+minimal host application using the public library. It starts its own authenticated
+loopback viewer and opens no browser. It owns presentation only; generation must be
+driven by an existing runner or another authorized caller. Closing it leaves the
+exploration intact, including when the underlying exploration is already finished.
+
+The custom catalog combines standard A2UI Button/Column/Row/Card contracts with
+native text semantics and six custom review widgets. Another renderer must implement
+those widgets, particularly `PrototypePreview`; generic A2UI support alone is not
+sufficient. The shipped renderer rejects incompatible protocol/catalog identities.
+Provider settings remain host-level UI and are not part of the portable catalog.
+
+A surface deletion is not exploration completion. Feedback does not wake the calling
+agent; hosts choose observation/notification policy and authorize further work.

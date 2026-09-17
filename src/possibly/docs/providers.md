@@ -146,3 +146,11 @@ use configured providers and upstream defaults; specific model IDs should be pin
 by callers when reproducibility matters. Model settings are not written to a user
 configuration file. Non-secret model provenance and the authorized batch plan are
 retained as part of the exploration's reproducibility record.
+
+## Embedded review hosts
+
+The A2UI review catalog carries no provider settings or credentials. The built-in
+workspace keeps its settings dialog as host-owned UI. Embedded applications use the
+existing public provider methods and retain responsibility for environment access
+and execution. Loading the review renderer, reading its catalog, and rendering
+retained results require no configured model provider.

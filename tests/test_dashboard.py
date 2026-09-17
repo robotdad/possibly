@@ -53,6 +53,10 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             page = browser.new_page(viewport={"width": 1440, "height": 1000})
+            browser_errors = []
+            page.on("pageerror", lambda e: browser_errors.append(str(e)))
+            page.on("console", lambda m: print("BROWSER:", m.text) if m.type == "error" else None)
+            page.set_default_timeout(10000)
             page.goto(url)
             page.get_by_role("button", name="Choose this direction").first.wait_for()
             page.get_by_role("button", name="Provider settings").click()
@@ -72,7 +76,8 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
             assert page.locator("iframe").count() == 0
             page.emulate_media(color_scheme="dark")
             page.get_by_role("button", name="Open preview", exact=True).first.click()
-            frame = page.locator("#preview-dialog iframe")
+            frame = page.locator("dialog iframe")
+            expect(frame).to_have_count(1)
             assert frame.count() == 1
             assert frame.get_attribute("sandbox") == "allow-scripts"
             child = page.frames[-1]
@@ -82,10 +87,11 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
             assert not p.review_snapshot(eid)["decisions"]
             page.get_by_role("button", name="Back to concepts").click()
             page.get_by_role("button", name="Mark for comparison", exact=True).first.click()
+            expect(page.get_by_role("button", name="Remove from comparison", exact=True)).to_have_count(1)
             page.get_by_role("button", name="Mark for comparison", exact=True).first.click()
             assert page.locator("iframe").count() == 0
             page.get_by_role("button", name="Open side-by-side comparison").click()
-            assert page.locator("iframe").count() == 2
+            expect(page.locator("iframe")).to_have_count(2)
             assert all(f.evaluate("innerWidth") == 1280 for f in page.frames[1:])
             page.keyboard.press("Escape")
             expect(page.locator("iframe")).to_have_count(0)
@@ -100,7 +106,7 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
             page.reload()
             page.get_by_role("heading", name="Calendar", exact=True).wait_for()
             assert page.get_by_role("tab", name="Calendar").get_attribute("aria-selected") == "true"
-            assert page.locator("iframe").count() == 1
+            expect(page.locator("iframe")).to_have_count(1)
             assert not page.get_by_text("About this direction").locator("..").get_attribute("open")
             page.get_by_label("Refinement feedback").fill("Include a repair budget")
             page.get_by_role("button", name="Send feedback", exact=True).click()
@@ -112,14 +118,14 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
             )
             new_id = result["operation"]["result"]["revision_ids"][0]
             page.get_by_role("button", name="Download HTML", include_hidden=True).wait_for(state="attached")
-            page.wait_for_function("document.querySelectorAll('.version option').length >= 3")
+            expect(page.locator(".version option")).to_have_count(4)
             page.get_by_text("Export this version", exact=True).click()
             with page.expect_download() as download:
                 page.get_by_role("button", name="Download HTML").click()
             assert download.value.suggested_filename == "prototype.html"
             assert p.get_exploration(eid)["revisions"][new_id]["kind"] == "interactive"
             page.get_by_role("tab", name="Compare concepts", exact=True).click()
-            assert page.locator(".card").count() == 2
+            expect(page.locator(".card")).to_have_count(2)
             page.get_by_role("button", name="Choose this direction").click()
             page.get_by_role("tab", name="Availability", exact=True).wait_for()
             page.get_by_role("tab", name="Calendar", exact=True).click()
@@ -141,6 +147,7 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
                 == "#f5f3eb"
             )
             page.screenshot(path="/private/tmp/possibly-dashboard.png", full_page=True)
+            assert not browser_errors
             browser.close()
         state = p.get_exploration(eid)
         assert state["selected_revision"]
