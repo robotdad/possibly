@@ -136,7 +136,7 @@ def present(client, exploration_id, view=None, reviewer_id="default"):
                 )
         return layout(rev["id"] + "-about", children, "details", "About this direction")
 
-    def prototype(rev, prefix):
+    def prototype(rev, prefix, *, expanded=False):
         review = rev.get("review", {})
         return node(
             prefix,
@@ -146,7 +146,7 @@ def present(client, exploration_id, view=None, reviewer_id="default"):
             width=review.get("viewport", {}).get("width", 1280),
             height=review.get("viewport", {}).get("height", 900),
             colorScheme=review.get("color_scheme", "light"),
-            onExpand=event("preview", revision_id=rev["id"]),
+            **({} if expanded else {"onExpand": event("preview", revision_id=rev["id"])}),
         )
 
     tabs = [
@@ -428,7 +428,7 @@ def present(client, exploration_id, view=None, reviewer_id="default"):
                                 "preview-cell-" + rid,
                                 [
                                     text("preview-title-" + rid, revisions[rid]["name"], "h3"),
-                                    prototype(revisions[rid], "preview-" + rid),
+                                    prototype(revisions[rid], "preview-" + rid, expanded=True),
                                 ],
                             )
                             for rid in preview

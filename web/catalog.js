@@ -51,7 +51,7 @@ export const Preview = component("PrototypePreview", {
   width: z.number().positive(),
   height: z.number().positive(),
   colorScheme: z.enum(["light", "dark"]),
-  onExpand: S.Action,
+  onExpand: S.Action.optional(),
 });
 export const Thumbnail = component("RevisionThumbnail", {
   revisionId: z.string(),

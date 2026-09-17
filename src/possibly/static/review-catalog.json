@@ -467,8 +467,7 @@
                   "title",
                   "width",
                   "height",
-                  "colorScheme",
-                  "onExpand"
+                  "colorScheme"
                 ]
               }
             ],

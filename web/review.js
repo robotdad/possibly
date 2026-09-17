@@ -45,6 +45,9 @@ class ReviewElement extends A2uiLitElement {
       .compare-grid > * {
         min-width: 0;
       }
+      .compare-grid:has(> :only-child) {
+        grid-template-columns: minmax(0, 1fr);
+      }
       .workspace.focus > :last-child {
         display: none;
       }
@@ -254,9 +257,11 @@ class PrototypePreview extends ReviewElement {
           <option value="fit">Fit to panel</option>
           <option value="actual">Actual size (scroll)</option>
         </select>
-        <button class="secondary" @click=${p.onExpand}>
-          Open large preview
-        </button>
+        ${p.onExpand
+          ? html`<button class="secondary" @click=${p.onExpand}>
+              Open large preview
+            </button>`
+          : nothing}
       </div>
       ${this.error
         ? html`<p role="alert">

@@ -148,3 +148,13 @@ library reopen/grant flow if you choose to continue generation.
    declared flows passed, but that is not exhaustive validation of every generated
    control or numeric assumption. Native renderer portability beyond this browser
    component implementation has not been tested.
+
+## Preview follow-up
+
+User review exposed a shadow-DOM styling bug: single-preview dialogs retained two
+columns because their single-child selector lived outside the layout component.
+Moved the rule into the component and removed the redundant expand button inside
+an already-expanded preview. Regression coverage now asserts full content width
+from concepts, selected workspaces, and history, including mobile. Final suite:
+**70 passed**. Visually verified the corrected retained Gemini/OpenAI previews in
+the in-app browser. No additional model calls.

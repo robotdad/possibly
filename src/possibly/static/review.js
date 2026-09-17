@@ -656,7 +656,7 @@ var Cc=Object.defineProperty;var $c=(t,e)=>{for(var r in e)Cc(t,r,{get:e[r],enum
         </form>
         ${c.content?_`${this.renderNode(c.content)}`:w}
       </dialog>
-    `:w}constructor(){super(...arguments),An(this,o)}static{An(i,r)}};return d=i})();var vc={...nn,tagName:"a2ui-modal"};var hi=new Fe("https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json",[Jo,Go,Xo,Ko,Qo,ec,ic,ac,sc,oc,cc,lc,uc,dc,pc,hc,gc,vc],No);var Sn="https://github.com/robotdad/possibly/catalogs/review-v1.json",Yt=(t,e)=>({name:t,tagName:"possibly-"+t.toLowerCase(),schema:p.object(e).strict()}),Cn=Yt("ReviewLayout",{children:Ee.ChildList,kind:p.enum(["stack","actions","tabs","details","panel","overall","card","content","grid","workspace","focused","compare","dialog"]),label:p.string().optional(),expanded:p.boolean().optional()}),$n=Yt("ReviewInput",{label:Ee.DynamicString,value:Ee.DynamicString,disabled:p.boolean(),onChange:Ee.Action.optional()}),Tn=Yt("ReviewTab",{label:Ee.DynamicString,selected:p.boolean(),action:Ee.Action}),En=Yt("RevisionPicker",{label:p.string(),value:p.string(),options:p.array(p.object({value:p.string(),label:p.string()}))}),On=Yt("PrototypePreview",{revisionId:p.string(),title:p.string(),width:p.number().positive(),height:p.number().positive(),colorScheme:p.enum(["light","dark"]),onExpand:Ee.Action}),Dn=Yt("RevisionThumbnail",{revisionId:p.string(),title:p.string(),action:Ee.Action}),Pn={...hi.components.get("Text"),tagName:"possibly-text"},bc=new Fe(Sn,[...["Button","Column","Row","Card"].map(t=>hi.components.get(t)),Pn,Cn,$n,Tn,En,On,Dn],[]);var xc=`:root {
+    `:w}constructor(){super(...arguments),An(this,o)}static{An(i,r)}};return d=i})();var vc={...nn,tagName:"a2ui-modal"};var hi=new Fe("https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json",[Jo,Go,Xo,Ko,Qo,ec,ic,ac,sc,oc,cc,lc,uc,dc,pc,hc,gc,vc],No);var Sn="https://github.com/robotdad/possibly/catalogs/review-v1.json",Yt=(t,e)=>({name:t,tagName:"possibly-"+t.toLowerCase(),schema:p.object(e).strict()}),Cn=Yt("ReviewLayout",{children:Ee.ChildList,kind:p.enum(["stack","actions","tabs","details","panel","overall","card","content","grid","workspace","focused","compare","dialog"]),label:p.string().optional(),expanded:p.boolean().optional()}),$n=Yt("ReviewInput",{label:Ee.DynamicString,value:Ee.DynamicString,disabled:p.boolean(),onChange:Ee.Action.optional()}),Tn=Yt("ReviewTab",{label:Ee.DynamicString,selected:p.boolean(),action:Ee.Action}),En=Yt("RevisionPicker",{label:p.string(),value:p.string(),options:p.array(p.object({value:p.string(),label:p.string()}))}),On=Yt("PrototypePreview",{revisionId:p.string(),title:p.string(),width:p.number().positive(),height:p.number().positive(),colorScheme:p.enum(["light","dark"]),onExpand:Ee.Action.optional()}),Dn=Yt("RevisionThumbnail",{revisionId:p.string(),title:p.string(),action:Ee.Action}),Pn={...hi.components.get("Text"),tagName:"possibly-text"},bc=new Fe(Sn,[...["Button","Column","Row","Card"].map(t=>hi.components.get(t)),Pn,Cn,$n,Tn,En,On,Dn],[]);var xc=`:root {
   color-scheme: light dark;
   --bg: #f5f3eb;
   --panel: #fffef9;
@@ -1060,9 +1060,6 @@ header .actions {
   max-height: calc(100vh - 32px);
   padding: 20px;
 }
-.preview-dialog .compare-grid:has(> :only-child) {
-  grid-template-columns: 1fr;
-}
 .preview-dialog .compare-grid > div {
   min-width: 0;
 }
@@ -1110,6 +1107,9 @@ header .actions {
       .grid > *,
       .compare-grid > * {
         min-width: 0;
+      }
+      .compare-grid:has(> :only-child) {
+        grid-template-columns: minmax(0, 1fr);
       }
       .workspace.focus > :last-child {
         display: none;
@@ -1186,9 +1186,9 @@ header .actions {
           <option value="fit">Fit to panel</option>
           <option value="actual">Actual size (scroll)</option>
         </select>
-        <button class="secondary" @click=${e.onExpand}>
-          Open large preview
-        </button>
+        ${e.onExpand?_`<button class="secondary" @click=${e.onExpand}>
+              Open large preview
+            </button>`:w}
       </div>
       ${this.error?_`<p role="alert">
             ${this.error}
