@@ -25,6 +25,7 @@ def public_result(value, path=()):
             for key, item in value.items()
             if key not in {"runner", "token", "api_key", "access_token", "refresh_token"}
             and not (path == ("execution",) and key in {"url", "log"})
+            and not (value.get("kind") == "presentation_available" and key == "url")
         }
     if isinstance(value, (list, tuple)):
         return [public_result(item, path) for item in value]
@@ -170,7 +171,9 @@ def create_server(client):
             resource_uri=UI_URI,
             visibility=["model", "app"],
             description=description,
-            annotations=ToolAnnotations(readOnlyHint=name in readonly, destructiveHint=False),
+            annotations=ToolAnnotations(
+                readOnlyHint=name in readonly, destructiveHint=name in {"finish", "stop"}
+            ),
         )(invoke)
 
     for name in operations:

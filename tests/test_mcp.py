@@ -18,6 +18,7 @@ from test_contracts import FakeIntelligence, started
 
 from possibly import Possibly
 from possibly.mcp import UI_URI, create_server, public_result
+from possibly.store import event
 
 APPS = advertise(EXTENSION_ID, {"mimeTypes": [APP_MIME_TYPE]})
 
@@ -33,7 +34,12 @@ def test_sdk_discovery_resource_and_bounded_grant(tmp_path):
         async with Client(create_server(library), extensions=[APPS]) as client:
             tools = (await client.list_tools()).tools
             start = next(tool for tool in tools if tool.name == "possibly_start")
+            finish = next(tool for tool in tools if tool.name == "possibly_finish")
+            stop = next(tool for tool in tools if tool.name == "possibly_stop")
             assert start.meta["ui"] == {"resourceUri": UI_URI, "visibility": ["model", "app"]}
+            assert not start.annotations.destructive_hint
+            assert finish.annotations.destructive_hint
+            assert stop.annotations.destructive_hint
             grant = start.input_schema["$defs"]["ExecutionGrant"]
             assert grant["properties"]["max_model_calls"]["maximum"] == 100
             assert grant["additionalProperties"] is False
@@ -225,6 +231,28 @@ def test_runner_secrets_not_distributed_and_base_import_stays_optional():
         env=os.environ.copy(),
     )
     assert run.returncode == 0, run.stderr
+
+
+def test_mcp_read_changes_redacts_private_presentation_event_url_in_both_outputs(tmp_path):
+    async def run():
+        library = Possibly(tmp_path, intelligence=FakeIntelligence())
+        eid, _ = started(library)
+        with library.store.transaction() as db:
+            state = library.store.get(eid, db)
+            event(state, "presentation_available", url="http://127.0.0.1:9999/")
+            event(state, "caller_link_available", url="https://example.com/brief")
+            library.store.put(db, state)
+        async with Client(create_server(library)) as client:
+            result = await client.call_tool("possibly_read_changes", {"exploration_id": eid})
+        text = result.content[0].text
+        structured = result.structured_content
+        assert "127.0.0.1:9999" not in text
+        assert "127.0.0.1:9999" not in json.dumps(structured)
+        events = {entry["kind"]: entry for entry in structured["result"]["events"]}
+        assert "url" not in events["presentation_available"]
+        assert events["caller_link_available"]["url"] == "https://example.com/brief"
+
+    anyio.run(run)
 
 
 def test_cleanup_failure_is_visible_with_retained_receipt(tmp_path, monkeypatch):

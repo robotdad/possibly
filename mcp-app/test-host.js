@@ -7,6 +7,7 @@ window.mountPossibly = async (html, result) => {
   bridge.oncalltool = args => window.hostCall(args);
   bridge.onupdatemodelcontext = async args => {window.savedContext=args; return {};};
   bridge.oninitialized = async () => {
+    if (!result) return;
     await bridge.sendToolInput({arguments:{exploration_id:result.structuredContent.exploration_id}});
     await bridge.sendToolResult(result);
   };

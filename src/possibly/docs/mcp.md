@@ -49,6 +49,8 @@ The host's conversation model is not automatically used by this server.
 `possibly_finish`, `possibly_stop`, `possibly_wait_cleanup`, `possibly_reopen`,
 `possibly_resume_operation`, and `possibly_reactivate_operation`.
 `possibly_status` reports whether model access was explicitly bound.
+Discovery marks `possibly_finish` and `possibly_stop` as destructive lifecycle
+operations; all other annotations retain their operation-specific read-only status.
 
 Every review control invokes those same model-visible tools. No app-only business
 actions or host-private endpoints exist. Grants have explicit action lists, bounded
@@ -94,8 +96,10 @@ network access, and the App SDK validates parent-window messages. The resource
 requests no network domains or browser permissions; it requests only `blob:`
 nested frames for isolated prototypes. Hosts may refuse that capability and still
 retain all textual tools. Runner URLs, access tokens and private log paths are
-removed from adapter results. A tool result never grants generated content access
-to a presenter token or provider credentials.
+removed from adapter results, including the private URL on a
+`presentation_available` observation. Other caller-provided URLs remain visible.
+A tool result never grants generated content access to a presenter token or provider
+credentials.
 
 Export produces blob download links. A host that disallows downloads may use the
 `possibly_export` tool directly to save its returned HTML and JSON handoff instead.
