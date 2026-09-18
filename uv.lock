@@ -856,6 +856,9 @@ dev = [
     { name = "pytest" },
     { name = "ruff" },
 ]
+mcp = [
+    { name = "mcp" },
+]
 openai = [
     { name = "openai" },
 ]
@@ -866,6 +869,7 @@ requires-dist = [
     { name = "anthropic", specifier = ">=0.70" },
     { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.70" },
     { name = "google-genai", specifier = ">=1.0" },
+    { name = "mcp", marker = "extra == 'mcp'", specifier = ">=2.2,<3" },
     { name = "openai", specifier = ">=1.0" },
     { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0" },
     { name = "playwright", specifier = ">=1.50,<2" },
@@ -873,7 +877,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12" },
 ]
-provides-extras = ["anthropic", "openai", "dev"]
+provides-extras = ["anthropic", "openai", "dev", "mcp"]
 
 [[package]]
 name = "pyasn1"

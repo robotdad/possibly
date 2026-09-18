@@ -99,6 +99,18 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
             page.get_by_role("status").filter(has_text="Recorded").wait_for()
             page.reload()
             page.get_by_role("heading", name="Calendar", exact=True).wait_for()
+            # The heading also appears while selection's automatic prototype is
+            # running. Wait for the dashboard to render its completed state before
+            # submitting feedback with that snapshot's optimistic version.
+            page.wait_for_function(
+                """() => {
+                    const prototypes = Object.values(state.operations)
+                        .filter(operation => operation.kind === 'make_interactive');
+                    return prototypes.length === 1
+                        && prototypes[0].state === 'succeeded'
+                        && lastVersion === state.state_version;
+                }"""
+            )
             assert page.get_by_role("tab", name="Calendar").get_attribute("aria-selected") == "true"
             assert page.locator("iframe").count() == 1
             assert not page.get_by_text("About this direction").locator("..").get_attribute("open")
@@ -140,7 +152,7 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
                 page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()")
                 == "#f5f3eb"
             )
-            page.screenshot(path="/private/tmp/possibly-dashboard.png", full_page=True)
+            page.screenshot(path=str(tmp_path / "possibly-dashboard.png"), full_page=True)
             browser.close()
         state = p.get_exploration(eid)
         assert state["selected_revision"]

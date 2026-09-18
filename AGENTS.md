@@ -111,6 +111,10 @@ provider default must not override the selected revision's provenance during ref
 - Run checks appropriate to the change. For behavior changes, cover meaningful failure
   paths and invariants. For UI changes, inspect the rendered result and verify feedback,
   selection, preview isolation and export still work.
+- MCP App regression tests must cover accepted-but-unacknowledged generation retries
+  and navigation before draft autosave. Keep browser-test outputs under `tmp_path`.
+- Dashboard tests submitting versioned decisions after automatic prototype work must
+  wait for the page to observe and render its completion, not merely show a workspace heading.
 - Report what changed, validation, live-test costs/limits when known, and remaining gaps.
   Publish commits or PRs when requested. Catalog contributions add only
   `tools/possibly/source.json`; the catalog owns generated manifest/provenance snapshots.
