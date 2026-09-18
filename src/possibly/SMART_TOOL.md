@@ -28,6 +28,12 @@ mocked prototype; it does not build a production backend or edit caller-owned pl
 The library is the tool: `possibly.Possibly` exposes every operation. The CLI is a
 thin JSON adapter. Compose capabilities using library values where possible.
 
+An optional host-neutral MCP / MCP Apps adapter is available through the `[mcp]`
+extra and `possibly-mcp --storage PATH`. Its model-visible tools and portable review
+view use the same public operations, retained IDs and bounded grants. See
+[MCP setup and capability limits](docs/mcp.md); base library/CLI usage does not
+require MCP. The adapter does not expose a public HTTP service or start a browser.
+
 ## Install and prerequisites
 
 Install the CLI without a checkout with `uv tool install --python 3.12 'possibly @ git+https://github.com/robotdad/possibly'`.

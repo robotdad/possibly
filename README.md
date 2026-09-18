@@ -77,6 +77,16 @@ batches took about 2–3 minutes. Earlier attempts failed too. The
 rather than promising a fixed wait. The illustration above is conceptual artwork,
 not a product screenshot.
 
+## Use it in an MCP host
+
+Install the optional adapter with
+`uv tool install --python 3.12 'possibly[mcp] @ git+https://github.com/robotdad/possibly'`
+and register `possibly-mcp --storage /absolute/path/to/possibly-state` as a stdio
+server. MCP Apps hosts can display its portable review view; text-only hosts use the
+same tools. Generation requires an explicit `--model-env` opt-in and bounded grant.
+No provider is needed to inspect retained work, record choices, or export it.
+See [setup, shared controls, and limits](src/possibly/docs/mcp.md).
+
 ## Developing or contributing?
 
 Clone the repository only when you want to work on Possibly itself.
