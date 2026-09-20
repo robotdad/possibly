@@ -95,6 +95,30 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
             snapshot = p.review_snapshot(eid)
             assert any("Unsent concept note" in r["drafts"].values() for r in snapshot["reviews"].values())
             assert not snapshot["decisions"]
+            # A background poll overtakes the forced post-selection refresh.
+            # The submitter must still await applied state before opening its tab.
+            page.evaluate("""() => {
+                const originalApi = api;
+                api = async (path, data) => {
+                    const result = await originalApi(path, data);
+                    if (path === '/decision') {
+                        api = async (nextPath, nextData) => {
+                            const next = await originalApi(nextPath, nextData);
+                            if (nextPath === '/state') {
+                                api = async (pollPath, pollData) => {
+                                    const polled = await originalApi(pollPath, pollData);
+                                    if (pollPath === '/state')
+                                        await new Promise(resolve => setTimeout(resolve, 200));
+                                    return polled;
+                                };
+                                void refresh();
+                            }
+                            return next;
+                        };
+                    }
+                    return result;
+                };
+            }""")
             page.get_by_role("button", name="Choose this direction").first.click()
             page.get_by_role("status").filter(has_text="Recorded").wait_for()
             expect(page.get_by_role("tab", name="Calendar")).to_have_attribute("aria-selected", "true")
@@ -130,6 +154,12 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
             with page.expect_download() as download:
                 page.get_by_role("button", name="Download HTML").click()
             assert download.value.suggested_filename == "prototype.html"
+            # A download starts before its follow-up state refresh completes.
+            # Wait for the export event before submitting another versioned choice.
+            page.wait_for_function(
+                "version => lastVersion === state.state_version && state.state_version >= version",
+                arg=p.get_exploration(eid)["state_version"],
+            )
             assert p.get_exploration(eid)["revisions"][new_id]["kind"] == "interactive"
             page.get_by_role("tab", name="Compare concepts", exact=True).click()
             assert page.locator(".card").count() == 2

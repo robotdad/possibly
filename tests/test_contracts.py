@@ -92,6 +92,39 @@ def test_complete_library_roundtrip_and_retention(client):
     assert client.get_revision(eid, r3)["parent"] == r2
 
 
+def test_export_chunks_preserve_utf8_and_reject_invalid_boundaries(tmp_path):
+    output = design(1)
+    output["directions"][0]["html"] = HTML.replace("Garden", "a" * 65_510 + "🌿 café 日本語")
+    library = Possibly(tmp_path, intelligence=FakeIntelligence([design(), output]))
+    eid, rid = started(library)
+    made = library.make_interactive(
+        eid, rid, grant=Grant(actions=("make_interactive",)), request_id="prototype"
+    )
+    rid = made["operation"]["result"]["revision_ids"][0]
+    receipt = library.export(eid, rid, request_id="unicode-export")["receipt"]
+    for kind in ("html", "handoff"):
+        expected = receipt[kind] if kind == "html" else json.dumps(receipt[kind], ensure_ascii=False)
+        offset, chunks = 0, []
+        while True:
+            chunk = library.read_export_chunk(eid, "unicode-export", kind, offset=offset)
+            size = len(chunk["data"].encode("utf-8"))
+            assert 0 < size <= 65_536
+            chunks.append(chunk["data"])
+            offset += size
+            if chunk["complete"]:
+                break
+        assert "".join(chunks) == expected
+    raw = receipt["html"].encode("utf-8")
+    emoji = raw.index("🌿".encode())
+    with pytest.raises(PossiblyError, match="boundary"):
+        library.read_export_chunk(eid, "unicode-export", "html", offset=emoji + 1)
+    with pytest.raises(PossiblyError, match="next UTF-8"):
+        library.read_export_chunk(eid, "unicode-export", "html", offset=emoji, max_bytes=1)
+    # Force a split inside a four-byte character, independent of HTML isolation.
+    chunk = library.read_export_chunk(eid, "unicode-export", "html", offset=emoji - 1, max_bytes=3)
+    assert chunk["data"].encode() == raw[emoji - 1 : emoji]
+
+
 def test_retry_and_one_use_continuation(client):
     eid, rid = started(client, continuation=True)
     first = client.record_decision(eid, rid, action="select", request_id="choose")

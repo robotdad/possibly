@@ -1485,7 +1485,17 @@ class Possibly:
         raw = value.encode("utf-8")
         if offset > len(raw):
             raise PossiblyError("invalid_offset", "Export offset is beyond the retained export.")
+        if offset < len(raw) and raw[offset] & 0xC0 == 0x80:
+            raise PossiblyError("invalid_offset", "Export offset must be a UTF-8 character boundary.")
         chunk = raw[offset : offset + max_bytes]
+        # A byte cap can bisect a multibyte character. Return only complete
+        # characters; callers advance by the actual UTF-8 length returned.
+        end = offset + len(chunk)
+        while end < len(raw) and raw[end] & 0xC0 == 0x80:
+            end -= 1
+        chunk = raw[offset:end]
+        if not chunk and offset < len(raw):
+            raise PossiblyError("invalid_limit", "Increase max_bytes to fit the next UTF-8 character.")
         return {
             "exploration_id": exploration_id,
             "request_id": request_id,

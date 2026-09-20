@@ -62,7 +62,8 @@ real Agent loop with a scripted provider, screenshot review and terminal submiss
 It makes no model request but may prepare/download runtime modules on its first run.
 Run the current conformance kit from `microsoft/amplifier-smart-tools` against this
 repository (`python <spec-checkout>/conformance/run.py <possibly-checkout>`). The
-root `smart-tool.json` points at `.venv/bin/possibly`, so sync this checkout first.
+root `smart-tool.json` invokes `possibly`; put the installed CLI on PATH (or use
+`uv run` from this checkout).
 Conformance checks packaging/help; they do not certify model output quality.
 
 When live evaluation is authorized, use a fresh store and a bounded trial. Examples

@@ -139,6 +139,7 @@ def create_server(client):
         "get_revision",
         "read_artifact",
         "operation_diagnostics",
+        "read_export_chunk",
         "provider_settings",
         "provider_job",
     }
@@ -156,6 +157,8 @@ def create_server(client):
             if name == "provider_login" and param.name == "on_progress":
                 continue
             annotation = types[param.name]
+            if name == "read_export_chunk" and param.name == "max_bytes":
+                annotation = Annotated[int, Field(ge=1, le=65_536, strict=True)]
             if param.default is None or (name == "record_decision" and param.name == "revision_id"):
                 annotation = annotation | None
             parameters.append(param.replace(annotation=annotation))

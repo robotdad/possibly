@@ -40,6 +40,9 @@ def test_sdk_discovery_resource_and_bounded_grant(tmp_path):
             assert not start.annotations.destructive_hint
             assert finish.annotations.destructive_hint
             assert stop.annotations.destructive_hint
+            export_chunk = next(tool for tool in tools if tool.name == "possibly_read_export_chunk")
+            assert export_chunk.annotations.read_only_hint
+            assert export_chunk.input_schema["properties"]["max_bytes"]["maximum"] == 65_536
             grant = start.input_schema["$defs"]["ExecutionGrant"]
             assert grant["properties"]["max_model_calls"]["maximum"] == 100
             assert grant["additionalProperties"] is False

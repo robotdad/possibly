@@ -115,7 +115,10 @@ history entry. Artifacts are capped at 1 MB UTF-8 and thumbnails are bounded bef
 snapshot serialization. An oversized artifact reports the bound rather than silently
 transmitting it. Export metadata is returned first; the App reconstructs exact
 HTML/handoff through public 64-KB `possibly_read_export_chunk` reads, rather than
-receiving an unbounded result. Native local light/dark choices override host
+receiving an unbounded result. Chunks end on UTF-8 character boundaries; advance
+the byte offset by the UTF-8 length of the returned text. An offset inside a
+character or a limit too small for its next character returns an actionable error.
+Native local light/dark choices override host
 appearance. In System mode, the adapter uses the host's resolved light/dark
 context and falls back to media preference; partial host-context updates merge
 without remounting the native controller or discarding drafts. Unsent drafts are
