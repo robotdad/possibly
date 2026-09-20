@@ -9,6 +9,8 @@ use_cases:
   - Hand a self-contained interactive prototype and decision record to a development agent
 platforms:
   - macos
+  - linux
+  - windows
 requires:
   - name: model-provider
     purpose: Generation runs through embedded Amplifier Agent and requires explicitly authorized provider credentials. Deterministic state and help operations work without them.

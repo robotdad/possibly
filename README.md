@@ -32,8 +32,8 @@ to explore next. No repository checkout is needed.
 
 Use a coding agent that can install and run local tools and open a browser.
 Possibly currently requires Python 3.12+, Git, uv, and Chromium; your agent can follow
-the setup instructions to check these and install the tool and browser. This is a
-local POC, validated on macOS.
+the setup instructions to check these and install the tool and browser. Possibly
+runs on macOS, Linux, and Windows.
 
 Possibly uses **Amplifier Agent** for its intelligence and needs its own configured
 model access. Your coding agent’s model access is not automatically shared with it.
