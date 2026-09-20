@@ -46,7 +46,7 @@ def test_sdk_discovery_resource_and_bounded_grant(tmp_path):
             resources = await client.read_resource(UI_URI)
             html = resources.contents[0]
             assert html.mime_type == APP_MIME_TYPE
-            assert 'sandbox="allow-scripts"' in html.text
+            assert "setAttribute('sandbox','allow-scripts')" in html.text
             assert "<script src=" not in html.text
             assert html.meta["ui"]["csp"]["connectDomains"] == []
             rejected = await client.call_tool(
@@ -155,7 +155,22 @@ def test_ui_and_model_share_decisions_drafts_conflicts_and_exports(tmp_path):
                     {"exploration_id": eid, "revision_id": interactive, "request_id": "export"},
                 )
             )
-            assert exported["result"]["receipt"]["handoff"]["revision_id"] == interactive
+            assert "html" not in exported["result"]["receipt"]
+            assert "handoff" not in exported["result"]["receipt"]
+            handoff = payload(
+                await client.call_tool(
+                    "possibly_read_export_chunk",
+                    {
+                        "exploration_id": eid,
+                        "request_id": "export",
+                        "export_kind": "handoff",
+                        "offset": 0,
+                        "max_bytes": 65_536,
+                    },
+                )
+            )["result"]
+            assert handoff["complete"]
+            assert json.loads(handoff["data"])["revision_id"] == interactive
             stopped = payload(
                 await client.call_tool("possibly_stop", {"exploration_id": eid, "request_id": "stop"})
             )
@@ -273,5 +288,91 @@ def test_cleanup_failure_is_visible_with_retained_receipt(tmp_path, monkeypatch)
             assert result.structured_content["error"]["code"] == "cleanup_incomplete"
             assert result.structured_content["result"]["receipt"]["exploration_id"] == eid
             assert library.get_exploration(eid)["lifecycle"] == "stopped"
+
+    anyio.run(run)
+
+
+def test_mcp_artifact_limit_is_checked_before_serialization_and_provider_actions_need_consent(tmp_path):
+    async def run():
+        library = Possibly(tmp_path, intelligence=FakeIntelligence())
+        eid, rid = started(library)
+        with library.store.transaction() as db:
+            state = library.store.get(eid, db)
+            state["revisions"][rid]["html"] = "å" * 600_000  # 1.2 MB UTF-8, not a character-count bypass.
+            library.store.put(db, state)
+        async with Client(create_server(library)) as client:
+            oversized = await client.call_tool(
+                "possibly_read_artifact",
+                {"exploration_id": eid, "revision_id": rid, "max_bytes": 1_000_000},
+            )
+            assert oversized.is_error
+            assert oversized.structured_content["error"]["code"] == "artifact_too_large"
+            denied = await client.call_tool(
+                "possibly_test_provider",
+                {"provider": "openai"},
+            )
+            assert denied.is_error
+
+    anyio.run(run)
+
+
+def test_review_attachment_persists_exact_pending_intent_and_typed_config_rejection(tmp_path):
+    async def run():
+        library = Possibly(tmp_path, intelligence=FakeIntelligence(), caller="mcp")
+        eid, rid = started(library)
+        async with Client(create_server(library)) as client:
+            opened = payload(
+                await client.call_tool(
+                    "possibly_open_review", {"exploration_id": eid, "request_id": "open-review"}
+                )
+            )
+            reviewer = opened["result"]["receipt"]["reviewer_id"]
+            state = payload(await client.call_tool("possibly_get_exploration", {"exploration_id": eid}))[
+                "result"
+            ]
+            request = {
+                "exploration_id": eid,
+                "revision_id": rid,
+                "action": "feedback",
+                "text": "Retain the exact request through transport loss",
+                "expected_state_version": state["state_version"],
+                "reviewer_id": reviewer,
+                "view_id": "compare",
+                "request_id": "lost-decision",
+            }
+            accepted = payload(await client.call_tool("possibly_record_decision", request))
+            pending = library.review_snapshot(eid)["reviews"][reviewer]["pending_mutations"]["lost-decision"]
+            assert pending["payload"] == request
+            replayed = payload(await client.call_tool("possibly_record_decision", request))
+            assert replayed["result"]["status"] == "replayed"
+            assert replayed["result"]["receipt"] == accepted["result"]["receipt"]
+            conflict = await client.call_tool(
+                "possibly_record_decision", {**request, "text": "Different text with reused request ID"}
+            )
+            assert conflict.is_error
+            assert conflict.structured_content["error"]["code"] == "request_conflict"
+            acknowledged = payload(
+                await client.call_tool(
+                    "possibly_acknowledge_review_intent",
+                    {
+                        "exploration_id": eid,
+                        "reviewer_id": reviewer,
+                        "mutation_request_id": "lost-decision",
+                        "request_id": "ack-lost-decision",
+                    },
+                )
+            )
+            assert acknowledged["result"]["receipt"]["acknowledged"]
+            assert not library.review_snapshot(eid)["reviews"][reviewer]["pending_mutations"]
+            invalid = await client.call_tool(
+                "possibly_configure_provider",
+                {
+                    "provider": "openai",
+                    "provider_config": {"nested": {"api_key": "not-allowed"}},
+                    "authorize_provider_action": True,
+                },
+            )
+            assert invalid.is_error
+            assert invalid.structured_content["error"]["code"] == "invalid_settings"
 
     anyio.run(run)

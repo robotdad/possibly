@@ -7,7 +7,6 @@ import os
 import secrets
 import subprocess
 import sys
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -101,37 +100,12 @@ def launch(client, eid):
 def serve(client, eid):
     """Serve only this exploration. Tokens are never sent to generated iframe documents."""
     initial = client.store.get(eid)
+    client.apply_runtime_provider_configuration(eid)
     runner = initial["runner"]
     token = (client.store.root / (runner["id"] + ".token")).read_text()
     period = initial["active_period_id"]
     server = None
     presentation_attempted = False
-    provider_job = {"status": "idle", "messages": []}
-    provider_job_lock = threading.Lock()
-
-    def run_provider_job(kind, data):
-        def progress(message):
-            with provider_job_lock:
-                provider_job["messages"].append(str(message))
-
-        try:
-            result = (
-                client.provider_login(**data, on_progress=progress)
-                if kind == "login"
-                else client.provider_models(**data)
-                if kind == "models"
-                else client.test_provider(**data)
-            )
-            with provider_job_lock:
-                provider_job.update(status="complete", result=result)
-        except PossiblyError as exc:
-            with provider_job_lock:
-                provider_job.update(status="failed", error=exc.to_dict()["error"])
-        except Exception:
-            with provider_job_lock:
-                provider_job.update(
-                    status="failed", error={"message": "Provider action failed. Check setup and try again."}
-                )
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
@@ -161,8 +135,7 @@ def serve(client, eid):
             if self.path == "/settings":
                 return self.send(client.provider_settings())
             if self.path == "/provider-job":
-                with provider_job_lock:
-                    return self.send(dict(provider_job))
+                return self.send(client.provider_job(eid))
             if self.path == "/progress":
                 snapshot = client.get_exploration(eid)
                 return self.send(
@@ -199,7 +172,7 @@ def serve(client, eid):
                         for o in client.store.get(eid)["operations"].values()
                     ):
                         raise PossiblyError("provider_busy", "Wait for generation before changing providers.")
-                    result = client.configure_provider(**data)
+                    result = client.configure_provider(exploration_id=eid, **data)
                 elif self.path == "/provider-job":
                     if any(
                         o["state"] in {"queued", "running"}
@@ -219,13 +192,12 @@ def serve(client, eid):
                         raise PossiblyError("invalid_settings", "Unknown provider action or option.")
                     if kind in {"login", "models"} and set(data) - {"provider", "timeout_seconds"}:
                         raise PossiblyError("invalid_settings", "Login accepts only provider and timeout.")
-                    with provider_job_lock:
-                        if provider_job["status"] == "running":
-                            raise PossiblyError("provider_busy", "A provider action is already running.")
-                        provider_job.clear()
-                        provider_job.update(status="running", kind=kind, messages=[])
-                    threading.Thread(target=run_provider_job, args=(kind, data), daemon=True).start()
-                    result = {"status": "running"}
+                    result = client.start_provider_job(
+                        eid,
+                        kind=kind,
+                        request_id=data.pop("request_id", new_id("provider_request")),
+                        **data,
+                    )
                 elif self.path == "/decision":
                     result = client.record_decision(
                         eid,
@@ -236,6 +208,10 @@ def serve(client, eid):
                         expected_state_version=data["expected_state_version"],
                     )
                 elif self.path == "/review-state":
+                    if data.pop("exploration_id", eid) != eid:
+                        raise PossiblyError(
+                            "stale_viewer", "Review state belongs to a different exploration."
+                        )
                     result = client.save_review_state(eid, **data)
                 elif self.path == "/export":
                     result = client.export(eid, data["revision_id"], request_id=data["request_id"])
@@ -322,6 +298,9 @@ def serve(client, eid):
                 if future is None:
                     pending = next((o for o in state["operations"].values() if o["state"] == "queued"), None)
                     if pending:
+                        # Read process-crossing configuration only at the owned
+                        # operation boundary; never mutate an active engine.
+                        client.apply_runtime_provider_configuration(eid)
                         active_operation = pending["id"]
                         future = pool.submit(client.run_operation, eid, active_operation)
                 with client.store.transaction() as db:

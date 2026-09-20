@@ -97,6 +97,7 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
             assert not snapshot["decisions"]
             page.get_by_role("button", name="Choose this direction").first.click()
             page.get_by_role("status").filter(has_text="Recorded").wait_for()
+            expect(page.get_by_role("tab", name="Calendar")).to_have_attribute("aria-selected", "true")
             page.reload()
             page.get_by_role("heading", name="Calendar", exact=True).wait_for()
             # The heading also appears while selection's automatic prototype is

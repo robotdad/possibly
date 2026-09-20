@@ -21,19 +21,30 @@ def catalog():
 
 
 def checked_config(value):
+    """Validate non-secret provider options consistently for every public adapter."""
     if not isinstance(value, dict):
         raise PossiblyError("invalid_settings", "Provider config must be a JSON object.")
 
     try:
-        json.dumps(value, allow_nan=False)
+        encoded = json.dumps(value, allow_nan=False, ensure_ascii=False).encode("utf-8")
     except (ValueError, TypeError):
         raise PossiblyError("invalid_settings", "Provider config must contain JSON values.") from None
+    if len(encoded) > 8_000:
+        raise PossiblyError("invalid_settings", "Provider config must be at most 8 KB of JSON.")
 
-    def check(obj):
+    def check(obj, depth=0):
+        if depth > 4:
+            raise PossiblyError("invalid_settings", "Provider config may be nested at most four levels.")
         if isinstance(obj, dict):
+            if len(obj) > 32:
+                raise PossiblyError(
+                    "invalid_settings", "Provider config objects may contain at most 32 fields."
+                )
             for key, item in obj.items():
-                if not isinstance(key, str):
-                    raise PossiblyError("invalid_settings", "Provider option names must be strings.")
+                if not isinstance(key, str) or len(key) > 100:
+                    raise PossiblyError(
+                        "invalid_settings", "Provider option names must be strings of at most 100 characters."
+                    )
                 if key.lower() in {"token", "auth_token", "headers", "extra_headers"} or any(
                     word in key.lower().replace("-", "_")
                     for word in (
@@ -50,10 +61,14 @@ def checked_config(value):
                         "invalid_settings",
                         "Use native environment variables for credentials, not provider config.",
                     )
-                check(item)
+                check(item, depth + 1)
         elif isinstance(obj, list):
+            if len(obj) > 32:
+                raise PossiblyError("invalid_settings", "Provider config lists may contain at most 32 items.")
             for item in obj:
-                check(item)
+                check(item, depth + 1)
+        elif not isinstance(obj, (str, int, float, bool, type(None))):
+            raise PossiblyError("invalid_settings", "Provider config must contain JSON scalar values.")
 
     check(value)
     return copy.deepcopy(value)

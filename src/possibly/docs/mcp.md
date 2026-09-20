@@ -42,12 +42,18 @@ The host's conversation model is not automatically used by this server.
 
 `tools/list` provides typed JSON Schemas for `possibly_start`,
 `possibly_get_exploration`, `possibly_get_operation`, `possibly_wait_operation`,
-`possibly_read_changes`, `possibly_save_review_state`, `possibly_review_snapshot`,
+`possibly_read_changes`, `possibly_open_review`, `possibly_save_review_state`,
+`possibly_acknowledge_review_intent`, `possibly_review_snapshot`,
 `possibly_get_revision`, `possibly_read_artifact`, `possibly_record_decision`,
 `possibly_make_interactive`, `possibly_refine`, `possibly_answer`,
 `possibly_finalize_operation`, `possibly_operation_diagnostics`, `possibly_export`,
+`possibly_read_export_chunk`,
 `possibly_finish`, `possibly_stop`, `possibly_wait_cleanup`, `possibly_reopen`,
-`possibly_resume_operation`, and `possibly_reactivate_operation`.
+`possibly_resume_operation`, `possibly_reactivate_operation`,
+`possibly_provider_settings`, `possibly_configure_provider`,
+`possibly_provider_models`, `possibly_test_provider`, and
+`possibly_provider_login`, `possibly_start_provider_job`, and
+`possibly_provider_job`.
 `possibly_status` reports whether model access was explicitly bound.
 Discovery marks `possibly_finish` and `possibly_stop` as destructive lifecycle
 operations; all other annotations retain their operation-specific read-only status.
@@ -67,8 +73,17 @@ are not retargeted. There is no exactly-once guarantee for external model calls
 across crashes. Use operation diagnostics before authorizing recovery.
 
 The initial adapter accepts text context at start. Material references, fan-out
-planning, provider login/configuration, and direct runner driving remain available
-through the library/CLI; they are not yet exposed through MCP. A host with no Apps
+planning, and direct runner driving remain available through the library/CLI; they
+are not yet exposed through MCP. Provider settings, bounded model discovery,
+connection test, and provider-owned login are exposed through the same public
+library adapter as the native settings dialog. They require the MCP process's
+existing explicit `--model-env` authority where applicable and a separate explicit
+per-action request. Provider setup tools are App-visible rather than model-visible;
+that visibility is enforced by the trusted MCP host, not cryptographic proof of a
+human click. A raw client accepted by that same trusted stdio host is therefore not
+an untrusted-model bypass. The App never gains credentials, a token, or authority
+to change another process. Provider jobs and device-flow progress are retained
+against the exploration; opening settings never starts one. A host with no Apps
 support can use all exposed tools normally. No MCP sampling, subscriptions or MCP
 Tasks are negotiated yet; native operation handles and deterministic polling are
 explicit. An owned runner may continue after the MCP connection or view closes.
@@ -80,15 +95,38 @@ Tools advertise `_meta.ui.resourceUri: "ui://possibly/review"`, and `resources/r
 returns self-contained `text/html;profile=mcp-app`. Hosts negotiate the standard
 `io.modelcontextprotocol/ui` extension and render it through their normal Apps
 bridge. The HTML bundles the official SDK; end users need neither Node nor a CDN.
-The UI compares retained revisions, previews generated HTML, records selection and
-feedback, saves per-revision drafts, starts bounded refinements, answers pending
-questions, exports, finishes, stops, and reopens retained work.
+It is built from the native dashboard document and controller, with only a narrow
+MCP public-library transport substituted for the loopback HTTP transport. It
+therefore retains native comparison cards, thumbnail/preview sizing, side-by-side
+comparison, direction workspaces, version history, feedback/correction, export
+eligibility, provider settings, and appearance controls rather than presenting a
+separate reduced workflow.
 
-The view polls only deterministic state/artifact reads. It preserves the viewed
-revision when new ones appear, and it publishes a bounded selection/draft summary
-with standard `ui/update-model-context` when the host supports it. Hosts can always
-read full domain state through the ordinary tools. Unsent drafts are context,
-not generation authority. Closing the view does not stop an exploration.
+Before mounting, a host calls `possibly_open_review` and passes that actual result
+to the App. The retained result supplies a review identity: omitting one creates a
+separate view; an existing identity is reused only when the caller explicitly
+chooses it. The App can turn a generic `possibly_get_exploration` initial result
+into a new public attachment before the native controller starts, but that fallback
+cannot recover an opaque remount. Review identity is not an authorization credential.
+
+The view polls only deterministic state/artifact reads. It hydrates displayed
+roots/history with bounded concurrent reads and lazily retrieves a newly opened
+history entry. Artifacts are capped at 1 MB UTF-8 and thumbnails are bounded before
+snapshot serialization. An oversized artifact reports the bound rather than silently
+transmitting it. Export metadata is returned first; the App reconstructs exact
+HTML/handoff through public 64-KB `possibly_read_export_chunk` reads, rather than
+receiving an unbounded result. Native local light/dark choices override host
+appearance. In System mode, the adapter uses the host's resolved light/dark
+context and falls back to media preference; partial host-context updates merge
+without remounting the native controller or discarding drafts. Unsent drafts are
+context, not generation authority. Opaque App frames do not assume durable web
+storage: the adapter uses a declared retained review identity and public
+review-state. Pending mutations retain their original ID and full payload, are
+replayed only through the library receipt path after transport loss, and are never
+acknowledged by a state read or matching decision text. A definite domain rejection
+clears only that request. Closing the view does not stop an exploration; standard
+`ui/resource-teardown` flushes retained pending drafts and stops the App's own
+timers/listeners without cancelling domain work.
 
 Generated prototypes live in a separate `sandbox="allow-scripts"` opaque iframe.
 They have no MCP App SDK or control bridge. The library's artifact CSP denies
@@ -101,11 +139,10 @@ removed from adapter results, including the private URL on a
 A tool result never grants generated content access to a presenter token or provider
 credentials.
 
-Export produces blob download links. A host that disallows downloads may use the
-`possibly_export` tool directly to save its returned HTML and JSON handoff instead.
-Export is provider-free and does not implicitly finish the exploration.
-Artifact and export results are currently inline; each host's response-size limits
-apply. Large media/resource streaming is not part of this first adapter.
+Export produces blob download links. A host that disallows downloads may use
+`possibly_export` followed by bounded `possibly_read_export_chunk` reads to save the
+same retained HTML and JSON handoff. Export is provider-free and does not implicitly
+finish the exploration.
 
 ## Develop and verify
 

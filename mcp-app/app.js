@@ -1,283 +1,519 @@
 import { App } from '@modelcontextprotocol/ext-apps';
 
+const MAX_ARTIFACT_BYTES = 1_000_000;
+const MAX_HYDRATED_ARTIFACTS = 24;
+const MAX_CONCURRENT_READS = 4;
 const app = new App({ name: 'Possibly review', version: '0.1.0' });
-const $ = (id) => document.getElementById(id);
-let explorationId = null, snapshot = null, revisionId = null, previewRevision = null;
-let draftTimer, pollTimer, refreshPromise, previewUrl, exportUrls = [];
-let busy = 0, connected = false, sequence = Date.now();
-let pendingExplorationId = null;
-let pendingDraft = null, navigationEpoch = 0;
-const pendingRequests = new Map();
-// Some opaque-origin hosts omit randomUUID even though getRandomValues works.
-const requestId = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), value => value.toString(16).padStart(2,'0')).join('');
-const reviewerId = `mcp-view-${requestId()}`;
 
-function notice(text = '', error = false) {
-  $('notice').textContent = text;
-  $('notice').classList.toggle('error', error);
+const artifacts = new Map();
+const artifactReads = new Map();
+const localPending = new Map();
+let desiredAttachment = null;
+let displayedAttachment = null;
+let presentedState = null;
+let attachmentEpoch = 0;
+let hostContext = {};
+let mediaQuery = null;
+let mediaListener = null;
+let mediaPoll = null;
+let controllerStarted = false;
+const attachmentRequests = new Set();
+const knownReviewers = new Map();
+
+const requestId = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(16)), value => value.toString(16).padStart(2, '0')).join('');
+
+function responseValue(response) {
+  const text = response.content?.find(item => item.type === 'text')?.text || '{}';
+  return response.structuredContent || JSON.parse(text);
 }
-function hostStyle(context) {
-  if (context?.theme) {
-    document.documentElement.style.colorScheme=context.theme;
-    document.documentElement.dataset.theme=context.theme;
-  }
-  for (const [name,value] of Object.entries(context?.styles?.variables || {})) {
-    if (name.startsWith('--') && typeof value === 'string') document.documentElement.style.setProperty(name,value);
-  }
-}
+
 function decode(response) {
-  const value = response.structuredContent || JSON.parse(response.content.find(c => c.type === 'text')?.text || '{}');
-  if (response.isError || value.status === 'rejected') throw new Error(value.error?.message || response.content?.[0]?.text || 'The request failed.');
+  const value = responseValue(response);
+  if (response.isError || value.error) {
+    const failure = new Error(value.error?.message || response.content?.[0]?.text || 'The request failed.');
+    failure.code = value.error?.code;
+    failure.currentStateVersion = value.error?.current_state_version;
+    failure.definite = true;
+    throw failure;
+  }
   return value;
 }
-async function call(name, args = {}) {
-  if (!connected) throw new Error('The host is not connected yet.');
-  let response;
+
+async function tool(name, args = {}) {
+  // A rejected Promise has no server result. An MCP error result is a definite
+  // domain response and must never be turned into transport uncertainty.
+  return decode(await app.callServerTool({ name: `possibly_${name}`, arguments: args }));
+}
+
+function currentTheme() {
+  const theme = hostContext?.theme;
+  return theme === 'dark' || theme === 'light'
+    ? theme
+    : matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
+}
+
+function applyHostContext(delta = {}) {
+  hostContext = { ...hostContext, ...delta, styles: { ...hostContext.styles, ...delta.styles } };
+  document.documentElement.dataset.hostTheme = currentTheme();
+  const fallback = !['light', 'dark'].includes(hostContext.theme);
+  document.documentElement.dataset.hostThemeSource = fallback ? 'media' : '';
+  if (fallback && !mediaQuery) {
+    mediaQuery = matchMedia('(prefers-color-scheme: dark)');
+    mediaListener = () => {
+      if (!['light', 'dark'].includes(hostContext.theme)) {
+        document.documentElement.dataset.hostTheme = currentTheme();
+      }
+    };
+    mediaQuery.addEventListener('change', mediaListener);
+    // A few opaque-frame hosts emulate media changes without dispatching the
+    // media-query event. This bounded listener only updates System appearance.
+    mediaPoll = setInterval(mediaListener, 250);
+  }
+  document.dispatchEvent(new Event('possibly-host-context'));
+}
+
+function attachmentFrom(value) {
+  if (value?.operation !== 'open_review') return null;
+  const result = value?.result || value;
+  const receipt = result?.receipt || result;
+  const attachment = receipt?.attachment || result?.attachment;
+  const explorationId =
+    attachment?.exploration_id || receipt?.exploration_id || value?.exploration_id || result?.id;
+  const reviewerId = attachment?.reviewer_id || receipt?.reviewer_id || value?.reviewer_id;
+  if (!explorationId || !reviewerId || typeof explorationId !== 'string' || typeof reviewerId !== 'string') {
+    return null;
+  }
+  return { exploration_id: explorationId, reviewer_id: reviewerId };
+}
+
+function attachmentRequest(value) {
+  const result = value?.result || value;
+  const explorationId = value?.exploration_id || result?.id || result?.exploration_id;
+  const reviewerId = value?.reviewer_id || result?.reviewer_id || null;
+  return typeof explorationId === 'string' ? { exploration_id: explorationId, reviewer_id: reviewerId } : null;
+}
+
+async function requestAttachment(value) {
+  if (value?.operation !== 'get_exploration') return;
+  const request = attachmentRequest(value);
+  if (!request) return;
+  const reviewerId = request.reviewer_id || knownReviewers.get(request.exploration_id) || null;
+  const key = `${request.exploration_id}:${reviewerId || 'new'}`;
+  if (attachmentRequests.has(key)) return;
+  attachmentRequests.add(key);
   try {
-    response = await app.callServerTool({name: `possibly_${name}`, arguments: args});
-    return decode(response);
-  } catch (error) {
-    if (response) error.responseReceived = true;
-    throw error;
+    // Compatibility for generic hosts that supplied only get_exploration: the
+    // App still obtains a supported, unique retained identity from the library
+    // before the native controller is allowed to start. Hosts that need opaque
+    // remount recovery supply the retained open_review result themselves.
+    const opened = await tool('open_review', {
+      exploration_id: request.exploration_id,
+      reviewer_id: reviewerId,
+      request_id: `open-${requestId()}`,
+    });
+    adoptRequestedAttachment(opened);
+    startNativeController();
+  } finally {
+    attachmentRequests.delete(key);
   }
 }
-async function submit(name, intent, build) {
-  const fingerprint = JSON.stringify(intent);
-  const pending = pendingRequests.get(name);
-  if (pending && pending.fingerprint !== fingerprint) {
-    throw new Error(`The previous ${name.replaceAll('_', ' ')} request may have been accepted. Retry its original inputs before starting different work.`);
+
+function adoptRequestedAttachment(value) {
+  const attachment = attachmentFrom(value);
+  if (!attachment) return;
+  knownReviewers.set(attachment.exploration_id, attachment.reviewer_id);
+  desiredAttachment = attachment;
+  attachmentEpoch += 1;
+  if (controllerStarted) document.dispatchEvent(new Event('possibly-exploration'));
+}
+
+function attachmentKey(attachment = displayedAttachment) {
+  return attachment ? `${attachment.exploration_id}:${attachment.reviewer_id}` : '';
+}
+
+function stable(value) {
+  if (Array.isArray(value)) return `[${value.map(stable).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value)
+      .sort()
+      .map(key => `${JSON.stringify(key)}:${stable(value[key])}`)
+      .join(',')}}`;
   }
-  const arguments_ = pending?.arguments || build();
-  if (!pending) pendingRequests.set(name, {fingerprint, arguments:arguments_});
-  try {
-    const value = await call(name, arguments_);
-    pendingRequests.delete(name);
-    return value;
-  } catch (error) {
-    if (error.responseReceived) pendingRequests.delete(name);
-    throw error;
+  return JSON.stringify(value);
+}
+
+function mutationSignature(path, payload) {
+  const copy = { ...payload };
+  delete copy.request_id;
+  // This key selects a retained uncertain intent; it never rewrites the
+  // original payload. A poll may observe a newer state version between loss and
+  // retry, so the newly rendered form's optimistic version is not intent
+  // identity.
+  delete copy.expected_state_version;
+  return `${path}:${stable(copy)}`;
+}
+
+function pendingFrom(snapshot, attachment) {
+  const retained = snapshot.review_states?.[attachment.reviewer_id]?.pending_mutations || {};
+  const pending = new Map(Object.entries(retained).map(([id, intent]) => [id, intent]));
+  for (const [id, intent] of localPending) {
+    if (intent.payload?.exploration_id === attachment.exploration_id) pending.set(id, intent);
+  }
+  return pending;
+}
+
+function hasPendingMutation(path, data) {
+  if (!displayedAttachment || data?.exploration_id !== displayedAttachment.exploration_id) return false;
+  return [...pendingFrom(presentedState || {}, displayedAttachment).values()].some(
+    intent => intent.path === path && mutationSignature(path, intent.payload) === mutationSignature(path, data),
+  );
+}
+
+function assertCurrent(epoch, attachment) {
+  if (
+    epoch !== attachmentEpoch ||
+    desiredAttachment?.exploration_id !== attachment.exploration_id ||
+    desiredAttachment?.reviewer_id !== attachment.reviewer_id
+  ) {
+    const stale = new Error('A newer review attachment arrived while this view was loading.');
+    stale.staleAttachment = true;
+    throw stale;
   }
 }
-function grant(action) {
-  const fields = [['turns', 1, 20], ['seconds', 1, 3600], ['tools', 1, 100], ['models', 1, 100]];
-  const values = fields.map(([id, min, max]) => {
-    const value = Number($(id).value);
-    if (!Number.isInteger(value) || value < min || value > max) throw new Error(`${id} must be between ${min} and ${max}.`);
-    return value;
+
+async function readArtifact(explorationId, revisionId) {
+  const key = `${explorationId}:${revisionId}`;
+  if (artifacts.has(key)) return artifacts.get(key);
+  if (artifactReads.has(key)) return artifactReads.get(key);
+  const read = tool('read_artifact', {
+    exploration_id: explorationId,
+    revision_id: revisionId,
+    max_bytes: MAX_ARTIFACT_BYTES,
+  })
+    .then(response => {
+      const html = response.result;
+      if (typeof html !== 'string' || new TextEncoder().encode(html).byteLength > MAX_ARTIFACT_BYTES) {
+        throw new Error('The prototype is too large for this portable review view.');
+      }
+      artifacts.set(key, html);
+      return html;
+    })
+    .finally(() => artifactReads.delete(key));
+  artifactReads.set(key, read);
+  return read;
+}
+
+async function hydrate(snapshot, attachment, epoch) {
+  const revisions = snapshot.revisions || {};
+  const saved = snapshot.review_states?.[attachment.reviewer_id] || {};
+  const savedRevision = Object.hasOwn(saved, 'view_revision_id') ? saved.view_revision_id : saved.revision_id;
+  const displayedRevision = savedRevision || snapshot.selected_revision;
+  const displayedDirection = revisions[displayedRevision]?.direction_id;
+  const needed = Object.keys(revisions).filter(
+    id => !revisions[id].parent || revisions[id].direction_id === displayedDirection || id === savedRevision,
+  );
+  if (needed.length > MAX_HYDRATED_ARTIFACTS) {
+    // Roots and the actually retained view win; other history is fetched on
+    // history navigation by ensureRevision(), never silently retargeted.
+    const roots = needed.filter(id => !revisions[id].parent);
+    const branch = needed.filter(id => revisions[id].direction_id === displayedDirection);
+    const ids = [...new Set([...roots, ...branch, savedRevision].filter(Boolean))].slice(-MAX_HYDRATED_ARTIFACTS);
+    return hydrateIds(snapshot, attachment, epoch, ids);
+  }
+  return hydrateIds(snapshot, attachment, epoch, needed);
+}
+
+async function hydrateIds(snapshot, attachment, epoch, ids) {
+  const queue = [...ids];
+  async function worker() {
+    while (queue.length) {
+      const id = queue.shift();
+      assertCurrent(epoch, attachment);
+      try {
+        snapshot.revisions[id].html = await readArtifact(attachment.exploration_id, id);
+      } catch (cause) {
+        snapshot.revisions[id].html =
+          '<!doctype html><title>Preview unavailable</title><p>Preview unavailable in this portable view.</p>';
+        snapshot.revisions[id].artifact_error = cause.message;
+      }
+      assertCurrent(epoch, attachment);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(MAX_CONCURRENT_READS, ids.length) }, worker));
+}
+
+async function state() {
+  if (!desiredAttachment) {
+    return {
+      id: 'unattached',
+      lifecycle: 'stopped',
+      state_version: 0,
+      context: 'No retained review attachment has been supplied by this host.',
+      revisions: {},
+      decisions: [],
+      operations: {},
+      review_states: {},
+    };
+  }
+  const attachment = { ...desiredAttachment };
+  const epoch = attachmentEpoch;
+  try {
+    const snapshot = (await tool('get_exploration', { exploration_id: attachment.exploration_id })).result;
+    assertCurrent(epoch, attachment);
+    if (!snapshot.review_states?.[attachment.reviewer_id]) {
+      throw new Error('The host supplied a review attachment that is not retained for this exploration.');
+    }
+    await hydrate(snapshot, attachment, epoch);
+    assertCurrent(epoch, attachment);
+    snapshot.review_attachment = attachment;
+    displayedAttachment = attachment;
+    return snapshot;
+  } catch (cause) {
+    if (cause.staleAttachment) return state();
+    throw cause;
+  }
+}
+
+async function ensureRevision(revisionId) {
+  if (!displayedAttachment || !revisionId || !presentedState?.revisions?.[revisionId]) return;
+  const attachment = { ...displayedAttachment };
+  const epoch = attachmentEpoch;
+  try {
+    presentedState.revisions[revisionId].html = await readArtifact(attachment.exploration_id, revisionId);
+    assertCurrent(epoch, attachment);
+  } catch (cause) {
+    presentedState.revisions[revisionId].html =
+      '<!doctype html><title>Preview unavailable</title><p>Preview unavailable in this portable view.</p>';
+    presentedState.revisions[revisionId].artifact_error = cause.message;
+  }
+}
+
+function actionTarget(data) {
+  if (!displayedAttachment) throw new Error('Wait for the retained review attachment to finish loading.');
+  if (data?.exploration_id !== displayedAttachment.exploration_id) {
+    throw new Error('This action belongs to a view that is no longer displayed.');
+  }
+  if (data?.reviewer_id !== displayedAttachment.reviewer_id) {
+    throw new Error('This action belongs to a different retained review identity.');
+  }
+  return displayedAttachment;
+}
+
+async function acknowledge(attachment, mutation) {
+  try {
+    await tool('acknowledge_review_intent', {
+      exploration_id: attachment.exploration_id,
+      reviewer_id: attachment.reviewer_id,
+      mutation_request_id: mutation.request_id,
+      request_id: `ack-${mutation.request_id}`,
+    });
+    localPending.delete(mutation.request_id);
+  } catch {
+    // The accepted receipt remains durable. Leave its exact retry intent intact
+    // until an acknowledgement reaches the library; never infer it from a read.
+  }
+}
+
+async function dispatchMutation(path, data) {
+  const attachment = actionTarget(data);
+  const snapshot = window.state;
+  const signature = mutationSignature(path, data);
+  const pending = [...pendingFrom(snapshot || {}, attachment).values()];
+  const matching = pending.find(intent => intent.path === path && mutationSignature(path, intent.payload) === signature);
+  const competing = pending.find(intent => intent.path === path && intent.payload?.exploration_id === data.exploration_id);
+  if (competing && !matching) {
+    throw new Error('The previous action has an unknown outcome. Retry its original inputs before submitting different work.');
+  }
+  const request = matching ? matching.payload : { ...data };
+  const intent = matching || { request_id: request.request_id, path, payload: request };
+  localPending.set(intent.request_id, intent);
+  try {
+    const result = await dispatch(path, request);
+    // The domain receipt is already authoritative. Clearing the review-side
+    // retry record is best-effort and must not postpone the truthful success
+    // notice behind an unrelated acknowledgement round trip.
+    void acknowledge(attachment, intent);
+    return result;
+  } catch (cause) {
+    if (cause.definite) localPending.delete(intent.request_id);
+    throw cause;
+  }
+}
+
+async function providerAction(data) {
+  const kind = data.kind || 'test';
+  if (!['test', 'models', 'login'].includes(kind)) throw new Error('Unknown provider action.');
+  const attachment = actionTarget({
+    exploration_id: data.exploration_id || displayedAttachment?.exploration_id,
+    reviewer_id: data.reviewer_id || displayedAttachment?.reviewer_id,
   });
-  return {actions:[action], max_turns:values[0], timeout_seconds:values[1], max_tool_calls:values[2], max_model_calls:values[3], prototype_after_selection:false};
+  return (
+    await tool('start_provider_job', {
+      ...data,
+      kind,
+      exploration_id: attachment.exploration_id,
+      reviewer_id: attachment.reviewer_id,
+      authorize_provider_action: true,
+      request_id: data.request_id || requestId(),
+    })
+  ).result;
 }
-function target() {
-  if (!explorationId || !revisionId) throw new Error('Open a revision first.');
-  return {exploration_id:explorationId, revision_id:revisionId, expected_state_version:snapshot.state_version};
-}
-async function act(fn, message = 'Saved.') {
-  busy++;
-  document.querySelectorAll('button').forEach(b => b.disabled = true);
-  notice('Working…');
-  try { await fn(); await refresh(); notice(message); }
-  catch (error) { try { await refresh(); } catch {} notice(error.message, true); }
-  finally { busy--; document.querySelectorAll('button').forEach(b => b.disabled = false); updateAvailability(); }
-}
-function updateAvailability() {
-  const active = snapshot?.lifecycle === 'active';
-  for (const id of ['select','prototype','save-feedback','refine','finish']) $(id).disabled = busy > 0 || !active || !revisionId;
-  $('stop').disabled = busy > 0 || !active;
-  $('reopen').disabled = busy > 0 || active || !revisionId;
-  $('export').disabled = busy > 0 || !revisionId;
-}
-function line(tag, text, className) {
-  const el = document.createElement(tag); el.textContent = text; if (className) el.className = className; return el;
-}
-function updateOperations() {
-  const area = $('operation-list'); area.replaceChildren();
-  for (const op of Object.values(snapshot.operations || {})) {
-    const box = line('div', `${op.kind.replaceAll('_',' ')} · ${op.state}`, 'operation');
-    if (op.failure) box.append(line('p', typeof op.failure === 'string' ? op.failure : JSON.stringify(op.failure), 'muted'));
-    for (const question of op.questions || []) {
-      if (question.state !== 'pending') continue;
-      const row = line('div', question.prompt, 'question');
-      const input = document.createElement('input'); input.setAttribute('aria-label', question.prompt);
-      const send = line('button','Answer'); send.onclick = () => act(() => call('answer', {exploration_id:explorationId,operation_id:op.id,question_id:question.id,text:input.value,request_id:requestId()}),'Answer recorded.');
-      row.append(input, send); box.append(row);
-    }
-    area.append(box);
+
+async function readExport(explorationId, requestId, exportKind) {
+  let offset = 0;
+  let output = '';
+  while (true) {
+    const chunk = (
+      await tool('read_export_chunk', {
+        exploration_id: explorationId,
+        request_id: requestId,
+        export_kind: exportKind,
+        offset,
+        max_bytes: 65_536,
+      })
+    ).result;
+    output += chunk.data;
+    offset += new TextEncoder().encode(chunk.data).byteLength;
+    if (chunk.complete) return exportKind === 'html' ? output : JSON.parse(output);
   }
 }
-async function openRevision(id, save = false) {
-  const changed = revisionId !== id || previewRevision === null;
-  if (save && revisionId && revisionId !== id) await flushDraft();
-  revisionId = id;
-  const revision = snapshot.revisions[id];
-  if (changed) {
-    const reviews = Object.values(snapshot.review_states || {}).sort((a,b) => (b.saved_at || 0)-(a.saved_at || 0));
-    $('feedback').value = (snapshot.review_states?.[reviewerId] || reviews.find(review => review.drafts?.[id]))?.drafts?.[id] || '';
+
+async function dispatch(path, data) {
+  if (path === '/state') return state();
+  if (path === '/settings' && !data) return (await tool('provider_settings')).result;
+  if (path === '/provider-job' && !data) {
+    if (!displayedAttachment) return { status: 'idle', messages: [] };
+    return (
+      await tool('provider_job', {
+        exploration_id: displayedAttachment.exploration_id,
+        reviewer_id: displayedAttachment.reviewer_id,
+      })
+    ).result;
   }
-  $('revision-note').textContent = `${revision.name || revision.direction_id} · ${revision.kind} · ${id}${revision.superseded ? ' · Superseded' : ''}${snapshot.selected_revision === id ? ' · Chosen' : ''}`;
-  document.querySelectorAll('.direction').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.id === id)));
-  if (save && snapshot.lifecycle === 'active') await saveDraft();
-  if (previewRevision !== id) {
-    const expected = id;
-    const value = await call('read_artifact', {exploration_id:explorationId, revision_id:id});
-    if (revisionId !== expected) return;
-    // A generated page gets neither the App SDK nor this bridge, and its own
-    // library-enforced CSP denies network access and navigation/form authority.
-    const nextUrl = URL.createObjectURL(new Blob([value.result], {type:'text/html'}));
-    $('preview').src = nextUrl; $('preview').hidden = false;
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewUrl = nextUrl; previewRevision = id;
+  if (path === '/progress') {
+    if (!displayedAttachment) return [];
+    const snapshot = (await tool('get_exploration', { exploration_id: displayedAttachment.exploration_id })).result;
+    return Promise.all(
+      Object.values(snapshot.operations || {})
+        .filter(operation => operation.kind === 'explore')
+        .slice(0, MAX_HYDRATED_ARTIFACTS)
+        .map(operation =>
+          tool('operation_diagnostics', {
+            exploration_id: displayedAttachment.exploration_id,
+            operation_id: operation.id,
+          }).then(value => value.result),
+        ),
+    );
   }
-  updateAvailability();
-  publishContext();
+  if (path === '/settings') {
+    if (!displayedAttachment) throw new Error('Wait for the retained review attachment to finish loading.');
+    const attachment = displayedAttachment;
+    return (
+      await tool('configure_provider', {
+        ...data,
+        exploration_id: attachment.exploration_id,
+        authorize_provider_action: true,
+      })
+    ).result;
+  }
+  if (path === '/provider-job') return providerAction(data);
+  if (path === '/decision') {
+    return (await tool('record_decision', data)).result;
+  }
+  if (path === '/review-state') {
+    const attachment = actionTarget(data);
+    return (
+      await tool('save_review_state', {
+        ...data,
+        exploration_id: attachment.exploration_id,
+        reviewer_id: attachment.reviewer_id,
+      })
+    ).result;
+  }
+  if (path === '/export') {
+    const result = (await tool('export', data)).result;
+    const receipt = result.receipt || {};
+    receipt.html = await readExport(data.exploration_id, data.request_id, 'html');
+    receipt.handoff = await readExport(data.exploration_id, data.request_id, 'handoff');
+    return result;
+  }
+  if (path === '/answer') return (await tool('answer', data)).result;
+  throw new Error('Not found.');
 }
-function refresh() {
-  if (!explorationId) return Promise.resolve();
-  if (refreshPromise?.explorationId === explorationId) return refreshPromise.promise;
-  const expected = explorationId;
-  const pending = {explorationId:expected};
-  pending.promise = (async () => {
-    const value = await call('get_exploration', {exploration_id:expected});
-    if (explorationId !== expected) return;
-    snapshot = value.result;
-    $('empty').hidden = true; $('exploration').hidden = false;
-    $('intent').textContent = snapshot.brief?.intent || snapshot.context || 'Exploration';
-    $('identity').textContent = expected;
-    $('lifecycle').textContent = snapshot.lifecycle;
-    updateOperations();
-    const revisions = Object.values(snapshot.revisions || {});
-    $('directions').replaceChildren();
-    for (const revision of revisions) {
-      const button = line('button', revision.name || revision.direction_id || revision.id, 'direction');
-      button.dataset.id = revision.id;
-      button.append(line('span', `${revision.kind}${revision.superseded ? ' · superseded' : ''}`));
-      button.onclick = () => act(() => openRevision(revision.id, true), 'Review position saved.');
-      $('directions').append(button);
-    }
-    if (!revisionId || !snapshot.revisions[revisionId]) revisionId = snapshot.selected_revision || revisions[0]?.id;
-    if (revisionId) await openRevision(revisionId);
-    $('review-data').textContent = JSON.stringify({selected_revision:snapshot.selected_revision,decisions:snapshot.decisions,reviews:snapshot.review_states}, null, 2);
-    updateAvailability();
-  })().finally(() => { if (refreshPromise === pending) refreshPromise = null; });
-  refreshPromise = pending;
-  return pending.promise;
+
+window.PossiblyDashboardTransport = {
+  async request(path, data) {
+    if (['/decision', '/answer', '/export'].includes(path)) return dispatchMutation(path, data);
+    return dispatch(path, data);
+  },
+};
+
+function viewedRevision(state, active, versions) {
+  if (!state || active === 'explore') return null;
+  if (versions?.[active]) return versions[active];
+  return Object.values(state.revisions || {})
+    .filter(revision => revision.direction_id === active && !revision.superseded)
+    .at(-1)?.id || null;
 }
-function captureDraft() {
-  if (!explorationId || snapshot?.lifecycle !== 'active') return null;
-  const savedRevision = revisionId;
-  return {
-    exploration_id:explorationId,
-    revision_id:savedRevision || null,
-    view_id:savedRevision ? snapshot.revisions[savedRevision].direction_id : 'compare',
-    draft:$('feedback').value,
-    reviewer_id:reviewerId,
-    sequence:++sequence,
-    request_id:requestId(),
-  };
+
+function startNativeController() {
+  if (controllerStarted || !desiredAttachment) return;
+  controllerStarted = true;
+  window.PossiblyReviewAttachment = { ...desiredAttachment };
+  window.PossiblyDashboardStart?.();
 }
-async function saveDraft(captured = captureDraft()) {
-  if (!captured) return;
-  await call('save_review_state', captured);
-  publishContext();
+
+function teardown() {
+  clearInterval(mediaPoll);
+  if (mediaQuery && mediaListener) mediaQuery.removeEventListener('change', mediaListener);
+  return window.PossiblyDashboardTeardown?.();
 }
-async function flushDraft() {
-  clearTimeout(draftTimer);
-  draftTimer = null;
-  if (!pendingDraft) pendingDraft = captureDraft();
-  while (pendingDraft) {
-    const captured = pendingDraft;
-    pendingDraft = null;
+
+(async () => {
+  app.ontoolresult = response => {
     try {
-      await saveDraft(captured);
-    } catch (error) {
-      // New typing may have captured a later sequence while this save was in flight.
-      // Keep the failed exact request for a visible retry rather than discarding either.
-      if (!pendingDraft) pendingDraft = captured;
-      throw error;
+      const value = decode(response);
+      if (attachmentFrom(value)) {
+        adoptRequestedAttachment(value);
+        startNativeController();
+      } else {
+        requestAttachment(value).catch(() => {});
+      }
+    } catch {
+      // A native controller, once started, owns user-visible tool errors.
     }
-  }
-}
-function publishContext() {
-  if (!connected) return;
-  app.updateModelContext({structuredContent:{exploration_id:explorationId,viewed_revision_id:revisionId,selected_revision_id:snapshot?.selected_revision || null,feedback_draft:$('feedback').value.slice(0,2000),draft_is_generation_authority:false}}).catch(() => {});
-}
-async function adopt(id) {
-  if (!id) return;
-  const navigation = ++navigationEpoch;
-  if (explorationId === id) {
-    await refresh();
-    if (navigation !== navigationEpoch) return;
-    notice('Reviewing retained exploration.');
-    return;
-  }
-  const previous = {explorationId, snapshot, revisionId, previewRevision, feedback:$('feedback').value};
-  await flushDraft();
-  if (navigation !== navigationEpoch) return;
-  explorationId = id; revisionId = null; previewRevision = null; $('feedback').value = '';
-  try {
-    await refresh();
-  } catch (error) {
-    if (navigation === navigationEpoch) {
-      explorationId = previous.explorationId;
-      snapshot = previous.snapshot;
-      revisionId = previous.revisionId;
-      previewRevision = previous.previewRevision;
-      $('feedback').value = previous.feedback;
-      await refresh().catch(() => {});
-    }
-    throw error;
-  }
-  if (navigation !== navigationEpoch) return;
-  notice('Reviewing retained exploration.');
-}
-function download(name, bytes, mime) {
-  const url = URL.createObjectURL(new Blob([bytes], {type:mime})); exportUrls.push(url);
-  const link = line('a',name); link.href=url; link.download=name; return link;
-}
-$('refresh').onclick = () => act(refresh, 'Up to date.');
-$('open').onclick = () => act(() => adopt($('open-id').value.trim()),'Exploration opened.');
-$('start').onclick = () => act(async () => {
-  const context = $('context').value;
-  const boundedGrant = grant('explore');
-  const value = await submit('start', {context,grant:boundedGrant}, () => ({context,request_id:requestId(),grant:boundedGrant}));
-  await adopt(value.exploration_id);
-}, 'Exploration accepted. Progress appears here; you can keep chatting.');
-$('select').onclick = () => act(() => call('record_decision',{...target(),action:'select',request_id:requestId()}),'Choice recorded.');
-$('save-feedback').onclick = () => act(() => call('record_decision',{...target(),action:'feedback',text:$('feedback').value,request_id:requestId()}),'Feedback recorded without starting generation.');
-$('prototype').onclick = () => act(() => {
-  const base = target(), boundedGrant = grant('make_interactive');
-  return submit('make_interactive', {exploration_id:base.exploration_id,revision_id:base.revision_id,grant:boundedGrant}, () => ({...base,grant:boundedGrant,request_id:requestId()}));
-},'Prototype work accepted.');
-$('refine').onclick = () => act(() => {
-  const base = target(), instruction = $('feedback').value, boundedGrant = grant('refine');
-  return submit('refine', {exploration_id:base.exploration_id,revision_id:base.revision_id,instruction,grant:boundedGrant}, () => ({...base,instruction,grant:boundedGrant,request_id:requestId()}));
-},'Refinement accepted.');
-$('finish').onclick = () => act(() => call('finish', {...target(),request_id:requestId()}), 'Exploration finished; retained work is still available.');
-$('stop').onclick = () => act(() => call('stop',{exploration_id:explorationId,request_id:requestId(),reason:'Stopped from review view'}),'Stop completed.');
-$('reopen').onclick = () => act(() => call('reopen',{exploration_id:explorationId,revision_id:revisionId,request_id:requestId()}),'Reopened without new generation.');
-$('export').onclick = () => act(async () => {
-  const value = await call('export', {exploration_id:explorationId,revision_id:revisionId,request_id:requestId()});
-  exportUrls.forEach(url => URL.revokeObjectURL(url)); exportUrls = [];
-  const receipt = value.result.receipt;
-  $('export-result').replaceChildren(download('prototype.html',receipt.html,'text/html'),document.createTextNode(' · '),download('handoff.json',JSON.stringify(receipt.handoff,null,2),'application/json'));
-}, 'Export is ready below. Exporting does not finish the exploration.');
-$('feedback').oninput = () => {
-  clearTimeout(draftTimer);
-  pendingDraft = captureDraft();
-  draftTimer=setTimeout(() => {
-    draftTimer = null;
-    flushDraft().then(() => notice('Draft saved as context.')).catch(error => notice(error.message,true));
-  },650);
-};
-app.ontoolresult = async response => {
-  try { const value=decode(response); if (value.exploration_id) { if (!connected) pendingExplorationId=value.exploration_id; else await adopt(value.exploration_id); } }
-  catch (error) { notice(error.message,true); }
-};
-app.onhostcontextchanged = hostStyle;
-app.onteardown = async () => { clearInterval(pollTimer); await flushDraft().catch(() => {}); if(previewUrl)URL.revokeObjectURL(previewUrl); exportUrls.forEach(url=>URL.revokeObjectURL(url)); return {}; };
-try {
-  await app.connect(); connected=true;
-  hostStyle(app.getHostContext());
-  notice('Ready. Open an exploration or start a new one.');
-  if (pendingExplorationId) await adopt(pendingExplorationId);
-  pollTimer=setInterval(() => { if(explorationId && !busy && !document.hidden)refresh().catch(error=>notice(error.message,true)); },5000);
-} catch(error) { notice(`The review view could not connect: ${error.message}`,true); }
+  };
+  app.onhostcontextchanged = applyHostContext;
+  app.onteardown = async () => {
+    await teardown();
+    return {};
+  };
+  window.PossiblyDashboardAdapter = {
+    reviewerId: () => desiredAttachment?.reviewer_id || displayedAttachment?.reviewer_id || null,
+    ensureRevision,
+    hasPendingMutation,
+    publish: ({ state, active, versions, drafts, reviewer, pending }) => {
+      presentedState = state;
+      app
+        .updateModelContext({
+          structuredContent: {
+            exploration_id: state?.id || displayedAttachment?.exploration_id || null,
+            viewed_revision_id: viewedRevision(state, active, versions),
+            selected_revision_id: state?.selected_revision || null,
+            view_id: active === 'explore' ? 'compare' : active || null,
+            reviewer_id: reviewer,
+            feedback_draft: (drafts || {})[viewedRevision(state, active, versions) || 'overall']?.slice(0, 2000) || '',
+            draft_is_generation_authority: false,
+            pending_mutation: Boolean(pending || localPending.size),
+          },
+        })
+        .catch(() => {});
+    },
+  };
+  await app.connect();
+  applyHostContext(app.getHostContext() || {});
+  startNativeController();
+})();

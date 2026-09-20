@@ -110,6 +110,18 @@ seizing host resources.
    remain distinguishable from a human decision. The initial-POC standalone HTML
    mockup may open independently, but it is not an authorized presentation-control
    channel: offline interactions do not silently create durable caller decisions.
+10. **An MCP App is the built-in dashboard over a different transport, not a
+    second dashboard.** When an authorized MCP Apps host presents Possibly's
+    dashboard, it renders the same canonical dashboard document, styles, control
+    inventory, responsive geometry, preview sizing, history, feedback and export
+    eligibility as the built-in dashboard. Its only substitution is a narrow
+    transport adapter for the public-library operations. It preserves the native
+    appearance control: system follows the host's resolved theme (falling back to
+    media preference when absent), and a person's local light/dark override wins.
+    Partial host-context updates must merge rather than reset appearance, drafts,
+    current workspace, pending retries, or mounted previews. An empty or
+    unattached MCP App may show only the truthful native-shell empty state; it does
+    not replace the dashboard with an adapter-specific workflow or controls.
 
 ## What v1 deliberately does NOT freeze
 
@@ -155,6 +167,13 @@ Each currently reads **Can't check**, not passed.
   without an explicit human action.
 - Offline interaction with a downloaded initial-POC HTML mockup does not create a
   durable presentation or caller decision.
+- An MCP App rendered in an independent standard host has the same native
+  dashboard controls, geometry, light/dark/system behavior and preview contract
+  at desktop and narrow viewports; its only adapter-specific behavior is the
+  public-library transport.
+- Host theme/context changes merge without remounting the dashboard or losing a
+  current workspace, outgoing draft, accepted-but-unacknowledged retry, or opaque
+  prototype preview.
 
 ## Reserved / open questions (NOT frozen)
 
@@ -164,3 +183,13 @@ Each currently reads **Can't check**, not passed.
   obsolete write contexts or execution grants?
 - What remains viewable after shutdown, and for how long is decision history retained?
 - Which viewing activity matters to the caller, and how is it summarized?
+
+## Changelog
+
+- **2026-09-19** — Added the authorized exact-parity direction after rendered
+  native/MCP comparison found a separately designed MCP review surface. The
+  corrective requirement is one canonical native dashboard and workflow with
+  narrow built-in HTTP and MCP public-library transports, including native
+  responsive geometry, preview behavior, system/light/dark appearance and
+  lossless runtime host-context updates. This remains DRAFT and does not lock a
+  host implementation or transport schema.
