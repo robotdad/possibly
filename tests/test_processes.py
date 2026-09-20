@@ -5,6 +5,7 @@ import sys
 import time
 
 import psutil
+import pytest
 
 from possibly.processes import is_alive, stop_worker
 
@@ -21,18 +22,27 @@ def test_liveness_does_not_signal_live_process():
     assert not is_alive(process.pid)
 
 
-def test_stop_worker_stops_descendants(tmp_path):
+@pytest.mark.parametrize("ignore_term", [False, True])
+def test_stop_worker_stops_descendants(tmp_path, ignore_term):
     child_file = tmp_path / "child.txt"
+    ready_file = tmp_path / "ready"
+    child_code = (
+        "import signal, sys, time; from pathlib import Path; "
+        + ("signal.signal(signal.SIGTERM, signal.SIG_IGN); " if ignore_term else "")
+        + "Path(sys.argv[1]).write_text('ready'); time.sleep(60)"
+    )
     script = (
         "import subprocess, sys, time; from pathlib import Path; "
-        "p = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)']); "
+        "p = subprocess.Popen([sys.executable, '-c', sys.argv[2], sys.argv[3]]); "
         "Path(sys.argv[1]).write_text(str(p.pid)); time.sleep(60)"
     )
-    process = subprocess.Popen([sys.executable, "-c", script, str(child_file)], start_new_session=True)
+    process = subprocess.Popen(
+        [sys.executable, "-c", script, str(child_file), child_code, str(ready_file)], start_new_session=True
+    )
     child = None
     try:
         deadline = time.monotonic() + 10
-        while not child_file.exists() and time.monotonic() < deadline:
+        while not ready_file.exists() and time.monotonic() < deadline:
             time.sleep(0.02)
         child = psutil.Process(int(child_file.read_text()))
         stop_worker(process)
