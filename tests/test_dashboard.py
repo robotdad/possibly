@@ -268,3 +268,30 @@ def test_runner_reports_expired_queued_grant(tmp_path):
     finally:
         p.stop(eid, request_id="stop")
         thread.join(3)
+
+
+def test_slow_initial_state_is_not_starved_by_polling(tmp_path):
+    from pathlib import Path
+
+    p = Possibly(tmp_path, intelligence=FakeIntelligence())
+    result = p.start("Garden", grant=Grant(), request_id="slow-state")
+    state = p.get_exploration(result["receipt"]["exploration_id"])
+    html = Path(__file__).parents[1].joinpath("src/possibly/dashboard.html").read_text()
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page()
+
+        def respond(route):
+            path = route.request.url.split("localhost")[1]
+            if path == "/state":
+                time.sleep(2.3)  # Longer than the normal two-second polling interval.
+                route.fulfill(json=state)
+            elif path == "/progress":
+                route.fulfill(json=[])
+            else:
+                route.fulfill(body=html, content_type="text/html")
+
+        page.route("http://localhost/**", respond)
+        page.goto("http://localhost/")
+        expect(page.get_by_role("button", name="Choose this direction").first).to_be_visible(timeout=7000)
+        browser.close()
