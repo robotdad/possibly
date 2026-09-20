@@ -1,0 +1,55 @@
+{
+  "kind": "tool",
+  "key": "possibly",
+  "name": "Possibly",
+  "accent": "#657044",
+  "title": "Possibly | Amplifier Smart Tools",
+  "promise": "Explore the experience before you build the app.",
+  "description": "Start with an idea. Try different ways the app could work, choose what feels useful, and refine a clickable prototype before committing to implementation.",
+  "image": "docs/images/possibly-possibilities.png",
+  "alt": "Conceptual artwork showing an idea branching into a journal, a map, and a planner before one direction is refined.",
+  "caption": "Conceptual artwork from Possibly. Different ways to approach the same task, with one direction brought forward for refinement.",
+  "width": 1774,
+  "height": 887,
+  "flow_title": "Find the experience worth building.",
+  "flow_intro": "The useful difference is how an app helps someone complete a task. Explore that before investing in the implementation.",
+  "steps": [
+    [
+      "Explore the possibilities.",
+      "Describe the idea and what matters. Possibly generates two or three concepts organized around different ways to approach the task."
+    ],
+    [
+      "Compare and choose.",
+      "Try a large interactive preview or compare two concepts side by side. Choose the direction you want to develop."
+    ],
+    [
+      "Refine and hand off.",
+      "Keep feedback and version history as the prototype evolves. Export self-contained HTML and a JSON handoff for the implementation agent."
+    ]
+  ],
+  "detail_title": "Make the choice with something you can try.",
+  "details": [
+    [
+      "Different task approaches.",
+      "Explore whether an app should center on a session, a plan, a place, or a decision. A useful alternative changes the experience."
+    ],
+    [
+      "A shared review space.",
+      "Compare concepts, keep drafts and feedback, and return to earlier versions while your agent helps refine the chosen direction."
+    ],
+    [
+      "A concrete handoff.",
+      "Export the prototype with the brief, decisions, assumptions, and mocked behavior so implementation starts from the reviewed work."
+    ]
+  ],
+  "prompt": "Use Possibly to explore an app for tracking household repairs. Read possibly --help, show me different ways to approach the task, let me choose a direction, and refine a clickable prototype before implementation.",
+  "install": "uv tool install --python 3.12 \"possibly @ git+https://github.com/robotdad/possibly\"\npossibly --help",
+  "prerequisites": "Python 3.12+, Git, uv, and Chromium. The usage guide includes the browser setup required for generation.",
+  "model_note": "Generation needs its own configured model access. Inspecting retained work, recording choices, and exporting need no model.",
+  "guide": "skills/possibly/SKILL.md",
+  "related": [
+    "stories",
+    "unfold",
+    "showrun"
+  ]
+}

@@ -1,5 +1,7 @@
 # Possibly
 
+[Website source and preview instructions](site/README.md)
+
 **Explore the experience before you build the app.**
 
 ![An idea branching into a journal, a map, and a planner, with one direction brought forward for refinement.](docs/images/possibly-possibilities.png)
