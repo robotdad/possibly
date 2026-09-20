@@ -55,6 +55,9 @@ The dashboard gear opens process-only provider settings, connection tests and lo
 No settings file is saved; provider-owned OAuth caches are allowed.
 See [provider setup and examples](docs/providers.md).
 
+Worker status reads do not signal processes. Cancellation stops owned worker trees,
+and recovery waits for the owning process to exit before admitting another attempt.
+
 ## Caller round trip
 
 Global host options precede the capability. Capability arguments are a JSON object

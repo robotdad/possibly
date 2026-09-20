@@ -11,6 +11,7 @@ from pathlib import Path
 from .artifacts import isolate_html
 from .checkpoints import read_checkpoint, validated_output
 from .models import Grant, PossiblyError, Presentation
+from .processes import is_alive
 from .store import Store, event, new_id
 
 ACTIONS = {"explore", "make_interactive", "refine"}
@@ -584,9 +585,7 @@ class Possibly:
         if op["state"] in {"running", "queued"}:
             runner = state.get("runner")
             if op["state"] == "running" and op.get("owner_pid"):
-                try:
-                    os.kill(op["owner_pid"], 0)
-                except ProcessLookupError:
+                if not is_alive(op["owner_pid"]):
                     op["execution_status"]["availability"] = "recovery_required"
                     op["state"] = "interrupted"
             if runner and time.time() - runner.get("heartbeat", 0) > 10:
@@ -1575,11 +1574,7 @@ class Possibly:
             def alive(pid):
                 if not pid:
                     return True
-                try:
-                    os.kill(pid, 0)
-                    return True
-                except ProcessLookupError:
-                    return False
+                return is_alive(pid)
 
             # Process death is evidence that its local resources are gone; never signal an arbitrary saved PID.
             with self.store.transaction() as db:
@@ -1671,9 +1666,7 @@ class Possibly:
             ):
                 raise PossiblyError("still_running", "The runner is still alive.")
             if op.get("execution_active") and op.get("owner_pid"):
-                try:
-                    os.kill(op["owner_pid"], 0)
-                except ProcessLookupError:
+                if not is_alive(op["owner_pid"]):
                     op["execution_active"] = False
                 else:
                     raise PossiblyError("still_running", "The operation's owning process is still alive.")
