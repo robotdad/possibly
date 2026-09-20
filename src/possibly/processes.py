@@ -53,20 +53,27 @@ def stop_tree(process):
 
 
 def stop_worker(process):
-    if process is None:
+    if process is None or process.poll() is not None:
         return
     try:
+        worker = psutil.Process(process.pid)
         if os.name != "nt":
-            # The worker owns a session; descendants can outlive its group leader.
-            if process.poll() is None:
-                os.killpg(process.pid, signal.SIGTERM)
+            children = worker.children(recursive=True)
+            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+            # A leader can exit before its children. Use their captured identities,
+            # rather than signalling a now-empty or reaped process group again.
+            for child in children:
                 try:
-                    process.wait(timeout=2)
-                except subprocess.TimeoutExpired:
+                    if child.is_running() and child.status() != psutil.STATUS_ZOMBIE:
+                        child.kill()
+                except psutil.NoSuchProcess:
                     pass
-            os.killpg(process.pid, signal.SIGKILL)
-        elif process.poll() is None:
-            stop_tree(psutil.Process(process.pid))
+        else:
+            stop_tree(worker)
     except (psutil.NoSuchProcess, ProcessLookupError):
         pass
     process.wait(timeout=10)
