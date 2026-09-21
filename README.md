@@ -1,6 +1,6 @@
 # Possibly
 
-[Website source and preview instructions](site/README.md)
+[Website](https://robotdad.github.io/possibly/)
 
 **Explore the experience before you build the app.**
 
