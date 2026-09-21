@@ -11,6 +11,9 @@ const localPending = new Map();
 let desiredAttachment = null;
 let displayedAttachment = null;
 let presentedState = null;
+let observedState = null;
+const terminalDiagnostics = new Map();
+let tornDown = false;
 let attachmentEpoch = 0;
 let hostContext = {};
 let mediaQuery = null;
@@ -122,11 +125,14 @@ async function requestAttachment(value) {
 }
 
 function adoptRequestedAttachment(value) {
+  if (tornDown) return;
   const attachment = attachmentFrom(value);
   if (!attachment) return;
   knownReviewers.set(attachment.exploration_id, attachment.reviewer_id);
   desiredAttachment = attachment;
   attachmentEpoch += 1;
+  observedState = null;
+  terminalDiagnostics.clear();
   if (controllerStarted) document.dispatchEvent(new Event('possibly-exploration'));
 }
 
@@ -173,6 +179,7 @@ function hasPendingMutation(path, data) {
 }
 
 function assertCurrent(epoch, attachment) {
+  if (tornDown) throw new Error('This review view has closed. Retained work was not cancelled.');
   if (
     epoch !== attachmentEpoch ||
     desiredAttachment?.exploration_id !== attachment.exploration_id ||
@@ -270,6 +277,7 @@ async function state() {
     assertCurrent(epoch, attachment);
     snapshot.review_attachment = attachment;
     displayedAttachment = attachment;
+    observedState = snapshot;
     return snapshot;
   } catch (cause) {
     if (cause.staleAttachment) return state();
@@ -394,19 +402,34 @@ async function dispatch(path, data) {
     ).result;
   }
   if (path === '/progress') {
-    if (!displayedAttachment) return [];
-    const snapshot = (await tool('get_exploration', { exploration_id: displayedAttachment.exploration_id })).result;
-    return Promise.all(
-      Object.values(snapshot.operations || {})
-        .filter(operation => operation.kind === 'explore')
-        .slice(0, MAX_HYDRATED_ARTIFACTS)
-        .map(operation =>
-          tool('operation_diagnostics', {
-            exploration_id: displayedAttachment.exploration_id,
-            operation_id: operation.id,
-          }).then(value => value.result),
-        ),
-    );
+    // The native controller has just read /state. Reuse that snapshot instead
+    // of doubling state reads, and retain the final diagnostics for each epoch.
+    if (!displayedAttachment || !observedState) return [];
+    const attachment = { ...displayedAttachment }, epoch = attachmentEpoch;
+    assertCurrent(epoch, attachment);
+    const operations = Object.values(observedState.operations || {})
+      .filter(operation => operation.kind === 'explore').slice(0, MAX_HYDRATED_ARTIFACTS);
+    const retained = new Set(operations.map(operation => operation.id));
+    for (const id of terminalDiagnostics.keys()) if (!retained.has(id)) terminalDiagnostics.delete(id);
+    const rows = new Array(operations.length), queue = operations.map((operation, index) => ({ operation, index }));
+    async function worker() {
+      while (queue.length) {
+        assertCurrent(epoch, attachment);
+        const { operation, index } = queue.shift(), signature = stable(operation);
+        const terminal = ['succeeded', 'failed', 'cancelled', 'interrupted'].includes(operation.state);
+        const cached = terminalDiagnostics.get(operation.id);
+        if (terminal && cached?.signature === signature) { rows[index] = cached.result; continue; }
+        const result = (await tool('operation_diagnostics', {
+          exploration_id: attachment.exploration_id, operation_id: operation.id,
+        })).result;
+        assertCurrent(epoch, attachment);
+        rows[index] = result;
+        if (terminal) terminalDiagnostics.set(operation.id, { signature, result });
+        else terminalDiagnostics.delete(operation.id);
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(MAX_CONCURRENT_READS, operations.length) }, worker));
+    return rows;
   }
   if (path === '/settings') {
     if (!displayedAttachment) throw new Error('Wait for the retained review attachment to finish loading.');
@@ -460,13 +483,14 @@ function viewedRevision(state, active, versions) {
 }
 
 function startNativeController() {
-  if (controllerStarted || !desiredAttachment) return;
+  if (tornDown || controllerStarted || !desiredAttachment) return;
   controllerStarted = true;
   window.PossiblyReviewAttachment = { ...desiredAttachment };
   window.PossiblyDashboardStart?.();
 }
 
 function teardown() {
+  tornDown = true;
   clearInterval(mediaPoll);
   if (mediaQuery && mediaListener) mediaQuery.removeEventListener('change', mediaListener);
   return window.PossiblyDashboardTeardown?.();
@@ -492,6 +516,9 @@ function teardown() {
     return {};
   };
   window.PossiblyDashboardAdapter = {
+    // Optional, namespaced MCP host extension. Native document visibility is
+    // also respected; hosts without this extension retain normal behavior.
+    isVisible: () => hostContext['com.microsoft.amplifier/visibility'] !== false,
     reviewerId: () => desiredAttachment?.reviewer_id || displayedAttachment?.reviewer_id || null,
     ensureRevision,
     hasPendingMutation,

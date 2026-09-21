@@ -148,6 +148,7 @@ def test_portable_review_reuses_native_dashboard_and_public_tools(tmp_path):
             await expect(frame.get_by_role("button", name="Open side-by-side comparison")).to_be_visible()
             await expect(frame.get_by_role("button", name="Make interactive with grant")).to_have_count(0)
             await frame.get_by_role("button", name="Provider settings").click()
+            await expect(frame.locator("#provider-status")).to_contain_text("Configured")
             await frame.get_by_label("Model", exact=True).fill("fixture-model")
             await frame.get_by_role("button", name="Apply for this session").click()
             await expect(frame.get_by_text("Applied for this session.", exact=False)).to_be_visible()
@@ -221,6 +222,7 @@ def test_portable_review_attachment_restores_workspace_history_appearance_and_dr
             await frame.get_by_label("Refinement feedback").fill("Keep this exact earlier workspace draft")
             await expect(frame.locator("#save-status")).to_have_text("Draft saved")
             await frame.get_by_role("button", name="Appearance: system", exact=True).click()
+            await expect(frame.locator("#save-status")).to_have_text("Draft saved")
             reviewer = await page.frames[1].evaluate("reviewer")
 
             reopened, _ = await mount(page, client, exploration_id, reviewer_id=reviewer)
