@@ -6,11 +6,11 @@
   "title": "Possibly | Amplifier Smart Tools",
   "promise": "Explore the experience before you build the app.",
   "description": "Start with an idea. Try different ways the app could work, choose what feels useful, and refine a clickable prototype before committing to implementation.",
-  "image": "docs/images/possibly-comparison.png",
-  "alt": "Possibly comparing two repair-caf\u00e9 app concepts side by side: a guided intake flow and a station board.",
-  "caption": "One app idea, two ways to work: guided intake or a station board. Actual Possibly comparison view with fictional demo data.",
-  "width": 3136,
-  "height": 1448,
+  "image": "docs/images/possibly-demo-poster.png",
+  "alt": "Possibly compares two repair-café concepts: guided intake reaches an assigned next step, then the station board opens the same item for inspection.",
+  "caption": "Compare and try two approaches, then carry one forward. An 18-second edit of real Possibly previews and the selected workspace, using fictional repair-café data.",
+  "width": 1568,
+  "height": 784,
   "flow_title": "Find the experience worth building.",
   "flow_intro": "The useful difference is how an app helps someone complete a task. Explore that before investing in the implementation.",
   "steps": [
@@ -51,5 +51,6 @@
     "stories",
     "unfold",
     "showrun"
-  ]
+  ],
+  "video": "docs/images/possibly-demo-selection.mp4"
 }

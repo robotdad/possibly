@@ -47,3 +47,85 @@ No network, backend, booking, or safety advice.
 ## Prompt
 
 Use case: stylized-concept. Asset type: wide landscape GitHub README editorial illustration for Possibly, a tool for exploring app experiences before building them. Primary request: evoke the practical act of discovering several useful ways to approach one app idea, comparing them, and refining one into a clickable prototype. Scene: a carefully composed design worktable viewed at a gentle overhead angle. One simple handwritten idea card branches into three tangible paper interface studies: a chronological activity journal, a place/object map, and a goal/progress planner. Their structure is visibly different, not just their colors. One study is pulled forward, with a small annotation and a polished but clearly provisional screen beside it. Style: elegant tactile paper-cut editorial illustration with subtle pencil marks, quiet dimensional shadows and natural paper grain. Wide composition about 2:1, balanced and readable at README width, warm cream paper and muted forest green with restrained amber accents. Mood: thoughtful, curious, grounded craft. No legible text, no logos, no robot, no magic sparkles, no futuristic holograms, no claims of production deployment, no charts implying performance benchmarks. This is conceptual artwork, not a screenshot of the product. Keep visual complexity moderate and leave breathing room.
+
+## Product demo loop
+
+`possibly-demo.mp4`, `possibly-demo.gif`, and `possibly-demo-poster.png` show the
+same retained Repair Together concepts in the real Possibly comparison dialog.
+The 14-second silent edit was prepared on 2026-09-20 from the successful Showrun
+capture `possibly-experience-comparison-02`. The original capture SHA-256 is
+`c43340e6d9114360590475635d31d5e54dd65a77fb4378bb31371da297da35e8`.
+It is previously recorded footage, not a claim that generation or the current
+application was exercised again for this edit. All sample people and items are
+fictional. The interaction is with sandboxed prototypes, not a production app.
+
+The shot plan is deliberately small:
+
+| Output time | Source range | Action / caption |
+| --- | --- | --- |
+| 0–3s | 25–28s | Compare both concepts: “One idea. Two ways to work.” |
+| 3–6s | 34.5–37.5s | Review the existing sample intake: “Try the guided intake.” |
+| 6–10s | 42.2–46.2s | Confirm and see the assignment: “See the next step.” |
+| 10–14s | 51.3–55.3s | Inspect the chair in the other concept: “Explore the station board.” |
+
+Vid's public library compiles the trims, audio removal and burned captions.
+The delivery graph crops the original 1600×1000 capture to the real 1568×724
+comparison dialog at (16, 138), then adds a 60-pixel cream caption strip.
+There are no rewritten product labels, synthetic interactions, or speed changes;
+waiting time between interactions is cut. The ending cuts back to the opening
+comparison on repeat. The MP4 is 1568×784, 25 fps, H.264 CRF18, silent, with
+fast-start metadata. The poster is its first decoded frame.
+
+Outtake's public `plan` and `render` operations convert that MP4 to the README
+GIF: range 0–14 seconds, `format="gif"`, `audio="mute"`, `max_width=1200`,
+`fps=12`, `captions_enabled=False`. The GIF is 1200×600 and approximately 542 KB;
+the MP4 is approximately 194 KB. Both retain the same burned captions.
+Outtake export ID: `export_a851ac3c8321416cb0e7069627d72d7d`.
+
+The site uses the MP4 with native playback controls, a full-size link and a
+shared pause-motion button. Reduced-motion preferences start with the poster;
+without JavaScript the native player remains usable and does not autoplay.
+The README links its GIF to that controllable player. Original source footage,
+local edit plans, receipts, private stores and viewer URLs are not published.
+
+### Extended selection ending
+
+`possibly-demo-selection.mp4` and `possibly-demo-selection.gif` retain the first
+14-second edit and add a four-second ending: cut from the comparison to the concept cards, choose Guided
+intake, and hold on its real refinement workspace. The caption reads “Choose a
+direction. Keep developing it.” The original `possibly-demo.mp4` and
+`possibly-demo.gif` remain unchanged for comparison and reuse.
+
+The added footage was captured with Playwright from the unchanged shipping
+dashboard using a local transport backed by public Possibly library operations.
+The original retained SQLite store was copied with SQLite's backup API; all
+review-state updates and the selection were written only to that isolated copy.
+`record_decision` accepted the selection of
+`rev_1015d03fdabe4aec9c5389f5340791ce`; its receipt reported no follow-up operation.
+No generation or refinement was run. This ending demonstrates the selection and
+workspace, not a generated refinement. The source exploration remains unchanged.
+
+Vid trims the new capture from 1.15–5.15 seconds and appends it to the preserved
+edit. The complete viewport is fitted without stretching into the same frame,
+so the actual selection button and refinement controls remain visible. Outtake
+exports the full 0–18 second edit at 1200 pixels wide and 12 fps. The MP4 is
+approximately 593 KB and the GIF 2.9 MB. Both decode successfully; browser checks
+cover duration, looping, pause/resume, mobile width, reduced motion and no-JS
+playback. The branded local preview and README now use this extended version.
+
+The selection shot begins after the comparison dialog closes, removing the brief
+rescaled-dialog flash at the edit boundary. The previous extended edit is retained
+locally, and the original 14-second MP4 and GIF remain unchanged.
+
+### Direct transition to the chosen workspace
+
+The current extended edit omits the concept-card selection detour. At 13.6 seconds
+it crossfades for 0.4 seconds directly from comparison into the actual selected
+Guided intake workspace, captioned “Carry your chosen direction forward.” The
+ending uses source time 2.65–6.4 seconds with a 0.65-second final-frame hold;
+total duration remains 18 seconds. This shows the selection result, not the click.
+Earlier extended cuts and their edit scripts are retained locally.
+
+The final crossfade delivery is approximately 444 KB (MP4) and 2.2 MB (GIF).
+Both are 18 seconds; the README embeds `possibly-demo-selection.gif`, and the
+website plays `possibly-demo-selection.mp4` with the original opening poster.

@@ -66,3 +66,16 @@ The overview illustration has a pause control that also pauses its title mark. R
 preferences select the still image by default. Shared media lives in
 `site/theme/assets/` and is included by the theme sync script. The original briefs
 and generation provenance live in `amplifier-smart-tools/site/artwork/`.
+
+## Product demo
+
+A tool page may set `video` to a repository-relative MP4 path in `site.json`.
+When present, `image` is its poster; `width`, `height`, `alt` and `caption`
+describe the video. The build copies both files. The player has native controls,
+muted looping playback and a full-size link. The shared motion button pauses
+both the branding and demo. Reduced-motion preferences disable initial autoplay;
+without JavaScript the poster and native controls remain available.
+
+This pilot uses a shared-theme extension also present in the canonical checkout;
+sync that theme before adding videos to the remaining tools. Media provenance
+and the shot plan are in `docs/images/README.md`.

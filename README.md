@@ -4,10 +4,11 @@
 
 **Explore the experience before you build the app.**
 
-![Possibly comparing two repair-café app concepts side by side: a guided intake flow and a station board.](docs/images/possibly-comparison.png)
+[![Possibly comparing and trying two repair-café concepts: guided intake and a station board.](docs/images/possibly-demo-selection.gif)](https://robotdad.github.io/possibly/)
 
-*One app idea, two ways to work: guide each visitor through intake, or organize
-the café around a station board. Actual Possibly comparison view with fictional demo data.*
+*One app idea, two ways to work. Try the guided intake and inspect an item on the
+station board, then choose a direction to carry forward. Real Possibly previews with fictional demo data; waiting time is cut.
+[Watch with playback controls](https://robotdad.github.io/possibly/).*
 
 Possibly helps you and your coding agent try different ways an app could work.
 Start with an idea, compare visual concepts, choose a direction, and refine a
