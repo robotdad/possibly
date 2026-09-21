@@ -1,9 +1,14 @@
 .venv/
+.work/
 __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
 dist/
+node_modules/
 examples/generated/
-web/node_modules/
+
+# Generated GitHub Pages output
+/_site/
+
 /.work/

@@ -9,6 +9,8 @@ use_cases:
   - Hand a self-contained interactive prototype and decision record to a development agent
 platforms:
   - macos
+  - linux
+  - windows
 requires:
   - name: model-provider
     purpose: Generation runs through embedded Amplifier Agent and requires explicitly authorized provider credentials. Deterministic state and help operations work without them.
@@ -27,6 +29,12 @@ mocked prototype; it does not build a production backend or edit caller-owned pl
 
 The library is the tool: `possibly.Possibly` exposes every operation. The CLI is a
 thin JSON adapter. Compose capabilities using library values where possible.
+
+An optional host-neutral MCP / MCP Apps adapter is available through the `[mcp]`
+extra and `possibly-mcp --storage PATH`. Its model-visible tools and portable review
+view use the same public operations, retained IDs and bounded grants. See
+[MCP setup and capability limits](docs/mcp.md); base library/CLI usage does not
+require MCP. The adapter does not expose a public HTTP service or start a browser.
 
 ## Install and prerequisites
 
@@ -48,6 +56,9 @@ helps with ChatGPT device OAuth or GitHub CLI/Copilot setup. These need no store
 The dashboard gear opens process-only provider settings, connection tests and login help.
 No settings file is saved; provider-owned OAuth caches are allowed.
 See [provider setup and examples](docs/providers.md).
+
+Worker status reads do not signal processes. Cancellation stops owned worker trees,
+and recovery waits for the owning process to exit before admitting another attempt.
 
 ## Caller round trip
 

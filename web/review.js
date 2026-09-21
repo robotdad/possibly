@@ -668,8 +668,12 @@ export function mountReview(container, options) {
       });
     return actionChain;
   }
-  refresh();
-  timer = setInterval(refresh, options.pollInterval ?? 2000);
+  async function pollRefresh() {
+    await refresh();
+    if (!disposed)
+      timer = setTimeout(pollRefresh, options.pollInterval ?? 2000);
+  }
+  pollRefresh();
   return {
     refresh,
     get snapshot() {
@@ -677,7 +681,7 @@ export function mountReview(container, options) {
     },
     dispose() {
       disposed = true;
-      clearInterval(timer);
+      clearTimeout(timer);
       container.replaceChildren();
       if (surface)
         processor.processMessages([

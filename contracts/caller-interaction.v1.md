@@ -149,6 +149,15 @@ cancel, or otherwise seize caller-shared resources.
    independently of exported HTML. Later continuation requires a new explicit
    request and appropriate authority; previous spending permission does not
    silently restart work.
+11. **Adapter presentation parity is not capability-only parity.** An adapter
+    that presents the built-in dashboard (including an MCP App) reuses the
+    canonical native dashboard rendering and workflow rather than offering a
+    reduced or redesigned control surface. The adapter binds its controls only to
+    documented public-library operations, retains their identity/version/retry
+    semantics, and may expose unavailable capabilities as the native dashboard's
+    truthful state rather than inventing a host-only alternative. A host's
+    resolved theme is presentation context, not authority to overwrite a
+    person's native appearance choice.
 
 ## What v1 deliberately does NOT freeze
 
@@ -198,6 +207,9 @@ Each currently reads **Can't check**, not passed.
   work; conflicting resubmission is not reported as accepted.
 - Internal work items survive interruption without becoming caller prerequisites
   or reviving expired/closed execution authority.
+- A standard MCP Apps host renders the canonical dashboard's native controls and
+  workflow while exercising only public-library operations; desktop/narrow and
+  light/dark/system comparisons do not accept a styling approximation.
 
 ## Reserved / open questions (NOT frozen)
 
@@ -209,3 +221,12 @@ Each currently reads **Can't check**, not passed.
 Dashboard lifecycle and action meanings belong to `dashboard-lifecycle.v1.md`.
 Experience quality and preservation belong to the exploration and continuity contracts.
 Proposed concrete public types and methods live in `interaction-api.v1.md`.
+
+## Changelog
+
+- **2026-09-19** — Added the authorized exact native-dashboard parity direction:
+  a dashboard-presenting MCP App must retain the canonical rendering/workflow and
+  use only a narrow public-library transport adapter. The rendered comparison
+  exposed a materially different MCP surface despite capability overlap. This
+  amendment remains DRAFT; it does not freeze MCP schemas or require a particular
+  host.

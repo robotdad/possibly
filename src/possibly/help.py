@@ -112,6 +112,7 @@ Relative paths in this skill are relative to the skill directory.
   <file>lib.py</file>
   <file>models.py</file>
   <file>docs/caller-guide.md</file>
+  <file>docs/mcp.md</file>
 </skill_resources>
 </skill_content>
 """

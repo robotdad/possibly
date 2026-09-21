@@ -92,7 +92,14 @@ routes a bounded set of review actions to existing library operations. The built
 runner supplies authenticated transport and lazy artifact/thumbnail delivery.
 `web/review.js` supplies the host-independent `mountReview` adapter and catalog
 components; the pinned upstream MessageProcessor and Lit renderer own A2UI binding
-and rendering. `dashboard.html` retains host provider settings and appearance.
+and rendering. `a2ui_dashboard.html` retains host provider settings and appearance.
+
+The MCP App continues to bundle `dashboard.html`, the native review controller
+from main, via `mcp-app/build.mjs`. Keeping that controller separate preserves
+retained MCP attachments, uncertain-action retries, draft recovery, and export
+transport while A2UI remains experimental. The MCP view has not yet migrated to
+the A2UI renderer. Both frontends are covered by browser regression tests.
+A2UI polling waits for refresh completion before scheduling the next poll.
 
 The frontend is rebuilt with `npm ci --prefix web --ignore-scripts` followed by
 `npm run --prefix web build`; `npm run --prefix web check` checks source formatting.

@@ -94,3 +94,13 @@ class Store:
                 "INSERT INTO receipts VALUES (?,?,?,?)", (caller, request_id, encoded, json.dumps(receipt))
             )
             return {"status": "accepted", "receipt": receipt}
+
+    def receipt(self, caller, request_id):
+        """Read one caller-scoped retained mutation receipt without replaying it."""
+        with self.connect() as db:
+            row = db.execute(
+                "SELECT payload,receipt FROM receipts WHERE caller=? AND request=?", (caller, request_id)
+            ).fetchone()
+        if row is None:
+            raise PossiblyError("receipt_not_found", "No retained receipt matches this request ID.")
+        return {"payload": json.loads(row[0]), "receipt": json.loads(row[1])}

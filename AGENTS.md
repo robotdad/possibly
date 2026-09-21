@@ -62,7 +62,8 @@ real Agent loop with a scripted provider, screenshot review and terminal submiss
 It makes no model request but may prepare/download runtime modules on its first run.
 Run the current conformance kit from `microsoft/amplifier-smart-tools` against this
 repository (`python <spec-checkout>/conformance/run.py <possibly-checkout>`). The
-root `smart-tool.json` points at `.venv/bin/possibly`, so sync this checkout first.
+root `smart-tool.json` invokes `possibly`; put the installed CLI on PATH (or use
+`uv run` from this checkout).
 Conformance checks packaging/help; they do not certify model output quality.
 
 When live evaluation is authorized, use a fresh store and a bounded trial. Examples
@@ -111,6 +112,10 @@ provider default must not override the selected revision's provenance during ref
 - Run checks appropriate to the change. For behavior changes, cover meaningful failure
   paths and invariants. For UI changes, inspect the rendered result and verify feedback,
   selection, preview isolation and export still work.
+- MCP App regression tests must cover accepted-but-unacknowledged generation retries
+  and navigation before draft autosave. Keep browser-test outputs under `tmp_path`.
+- Dashboard tests submitting versioned decisions after automatic prototype work must
+  wait for the page to observe and render its completion, not merely show a workspace heading.
 - Report what changed, validation, live-test costs/limits when known, and remaining gaps.
   Publish commits or PRs when requested. Catalog contributions add only
   `tools/possibly/source.json`; the catalog owns generated manifest/provenance snapshots.

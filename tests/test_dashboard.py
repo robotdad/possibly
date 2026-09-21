@@ -105,6 +105,16 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
             page.get_by_role("status").filter(has_text="Recorded").wait_for()
             page.reload()
             page.get_by_role("heading", name="Calendar", exact=True).wait_for()
+            # Selection can start a background prototype. Reload only after it
+            # completes so the next decision uses the rendered completed state.
+            deadline = time.monotonic() + 10
+            while any(
+                o["state"] in {"queued", "running"} for o in p.get_exploration(eid)["operations"].values()
+            ):
+                assert time.monotonic() < deadline
+                time.sleep(0.02)
+            page.reload()
+            page.get_by_role("heading", name="Calendar", exact=True).wait_for()
             assert page.get_by_role("tab", name="Calendar").get_attribute("aria-selected") == "true"
             expect(page.locator("iframe")).to_have_count(1)
             assert not page.get_by_text("About this direction").locator("..").get_attribute("open")
@@ -146,7 +156,7 @@ def test_dashboard_selection_refresh_and_isolation(tmp_path):
                 page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()")
                 == "#f5f3eb"
             )
-            page.screenshot(path="/private/tmp/possibly-dashboard.png", full_page=True)
+            page.screenshot(path=str(tmp_path / "possibly-dashboard.png"), full_page=True)
             assert not browser_errors
             browser.close()
         state = p.get_exploration(eid)

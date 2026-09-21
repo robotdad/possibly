@@ -3,8 +3,9 @@ import json
 from types import SimpleNamespace
 
 import pytest
+from test_contracts import FakeIntelligence, started
 
-from possibly import PossiblyError
+from possibly import Possibly, PossiblyError
 from possibly.intelligence import _ENGINE_LOCK, AmplifierIntelligence
 from possibly.providers import ProviderConfig, checked_config, connection_test, credential_status
 
@@ -212,3 +213,52 @@ def test_copilot_reuses_gh_cache_without_exposing_token(monkeypatch):
     assert os.environ["GH_TOKEN"] == "cached-private-token"
     assert "cached-private-token" not in json.dumps(result)
     assert not messages
+
+
+def test_owned_runtime_provider_configuration_is_scoped_merged_and_cleaned(tmp_path):
+    seeded = Possibly(tmp_path, intelligence=FakeIntelligence())
+    eid, _ = started(seeded)
+    other_eid = seeded.start("A separate garden app", request_id="other", grant={"actions": ["explore"]})[
+        "receipt"
+    ]["exploration_id"]
+    owner = Possibly(
+        tmp_path,
+        intelligence=AmplifierIntelligence(provider="openai", allow_environment=True),
+        execution="owned_runner",
+    )
+    owner.configure_provider(
+        "openai",
+        provider_config={"base_url": "https://example.invalid", "temperature": 0.2},
+        exploration_id=eid,
+    )
+    owner.configure_provider("openai", model="selected-model", exploration_id=eid)
+    state = owner.store.get(eid)
+    assert state["provider_runtime"]["provider_config"] == {
+        "base_url": "https://example.invalid",
+        "temperature": 0.2,
+    }
+    assert "provider_runtime" not in owner.store.get(other_eid)
+
+    runner = Possibly(
+        tmp_path,
+        intelligence=AmplifierIntelligence(provider="openai", allow_environment=True),
+        execution="owned_runner",
+    )
+    runner.apply_runtime_provider_configuration(eid)
+    assert runner.intelligence.configuration().model == "selected-model"
+    assert runner.intelligence.configuration().options["temperature"] == 0.2
+    owner.configure_provider("openai", provider_config={}, exploration_id=eid)
+    assert owner.store.get(eid)["provider_runtime"]["provider_config"] == {}
+
+    with owner.store.transaction() as db:
+        state = owner.store.get(eid, db)
+        state["operations"]["busy"] = {"state": "running"}
+        owner.store.put(db, state)
+    with pytest.raises(PossiblyError, match="active generation"):
+        owner.configure_provider("openai", model="blocked", exploration_id=eid)
+    with owner.store.transaction() as db:
+        state = owner.store.get(eid, db)
+        del state["operations"]["busy"]
+        owner.store.put(db, state)
+    owner.stop(eid, request_id="cleanup-runtime-config")
+    assert "provider_runtime" not in owner.store.get(eid)

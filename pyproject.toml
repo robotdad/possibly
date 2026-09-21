@@ -11,14 +11,17 @@ dependencies = [
   "openai>=1.0",
   "anthropic>=0.70",
   "google-genai>=1.0",
+  "psutil>=7,<8",
 ]
 [project.optional-dependencies]
 # Preserve older install commands; these SDKs are now included by default.
 anthropic = ["anthropic>=0.70"]
 openai = ["openai>=1.0"]
 dev = ["pytest>=8", "ruff>=0.12", "jsonschema>=4.25,<5"]
+mcp = ["mcp>=2.2,<3"]
 [project.scripts]
 possibly = "possibly.cli:main"
+possibly-mcp = "possibly.mcp:main"
 [project.urls]
 Repository = "https://github.com/robotdad/possibly"
 [build-system]

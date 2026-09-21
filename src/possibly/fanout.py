@@ -3,7 +3,6 @@
 import copy
 import json
 import os
-import signal
 import subprocess
 import sys
 import time
@@ -11,6 +10,7 @@ from pathlib import Path
 
 from .checkpoints import Diagnostics
 from .models import PossiblyError
+from .processes import stop_worker as terminate
 from .providers import ProviderConfig, catalog, credential_status
 
 LENSES = [
@@ -85,18 +85,6 @@ def plan_exploration(candidates=None, concurrency=3):
     if len({r["lens"]["id"] for r in rows}) != len(rows):
         raise PossiblyError("invalid_plan", "Use distinct task lenses; cosmetic variation is not enough.")
     return {"candidates": rows, "concurrency": concurrency}
-
-
-def terminate(process):
-    if process.poll() is None:
-        try:
-            os.killpg(process.pid, signal.SIGTERM)
-            process.wait(timeout=2)
-        except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGKILL)
-            process.wait()
-        except ProcessLookupError:
-            pass
 
 
 def generate(request, workspace, grant, cancelled, on_candidate):

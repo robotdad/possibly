@@ -1,5 +1,7 @@
 # Possibly
 
+[Website source and preview instructions](site/README.md)
+
 **Explore the experience before you build the app.**
 
 ![An idea branching into a journal, a map, and a planner, with one direction brought forward for refinement.](docs/images/possibly-possibilities.png)
@@ -30,8 +32,8 @@ to explore next. No repository checkout is needed.
 
 Use a coding agent that can install and run local tools and open a browser.
 Possibly currently requires Python 3.12+, Git, uv, and Chromium; your agent can follow
-the setup instructions to check these and install the tool and browser. This is a
-local POC, validated on macOS.
+the setup instructions to check these and install the tool and browser. Possibly
+runs on macOS, Linux, and Windows.
 
 Possibly uses **Amplifier Agent** for its intelligence and needs its own configured
 model access. Your coding agent’s model access is not automatically shared with it.
@@ -76,6 +78,16 @@ batches took about 2–3 minutes. Earlier attempts failed too. The
 [trial report](docs/DIVERSITY-EVALUATION.md) records timings, critiques, and limits
 rather than promising a fixed wait. The illustration above is conceptual artwork,
 not a product screenshot.
+
+## Use it in an MCP host
+
+Install the optional adapter with
+`uv tool install --python 3.12 'possibly[mcp] @ git+https://github.com/robotdad/possibly'`
+and register `possibly-mcp --storage /absolute/path/to/possibly-state` as a stdio
+server. MCP Apps hosts can display its portable review view; text-only hosts use the
+same tools. Generation requires an explicit `--model-env` opt-in and bounded grant.
+No provider is needed to inspect retained work, record choices, or export it.
+See [setup, shared controls, and limits](src/possibly/docs/mcp.md).
 
 ## Developing or contributing?
 
