@@ -4,7 +4,10 @@
 
 **Explore the experience before you build the app.**
 
-![An idea branching into a journal, a map, and a planner, with one direction brought forward for refinement.](docs/images/possibly-possibilities.png)
+![Possibly comparing two repair-café app concepts side by side: a guided intake flow and a station board.](docs/images/possibly-comparison.png)
+
+*One app idea, two ways to work: guide each visitor through intake, or organize
+the café around a station board. Actual Possibly comparison view with fictional demo data.*
 
 Possibly helps you and your coding agent try different ways an app could work.
 Start with an idea, compare visual concepts, choose a direction, and refine a
@@ -76,8 +79,7 @@ Generation time and quality vary by model and brief. In our latest household and
 pinball trials, the first concepts arrived in 28–38 seconds and full three-concept
 batches took about 2–3 minutes. Earlier attempts failed too. The
 [trial report](docs/DIVERSITY-EVALUATION.md) records timings, critiques, and limits
-rather than promising a fixed wait. The illustration above is conceptual artwork,
-not a product screenshot.
+rather than promising a fixed wait.
 
 ## Use it in an MCP host
 
