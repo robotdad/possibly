@@ -1,4 +1,46 @@
-# README illustration
+# Product screenshot
+
+`possibly-comparison.png` is a Chromium screenshot of the shipping Possibly
+side-by-side comparison dialog at commit `8e75d95`, captured on 2026-09-20.
+It shows two retained, model-generated concepts for **Repair Together**, a fictional
+repair café: **Guided intake** and **Station board**. Both cover item intake,
+reviewing the item, its assigned next step, and the station board. The difference
+is the organizing task and flow. Names and repair items are fictional demo data.
+
+The capture uses the unchanged dashboard HTML and original retained prototype
+HTML. There are no CSS overrides, rewritten UI labels, composited screens, or
+image-generation edits. The image is cropped to the actual comparison dialog by
+Playwright's element screenshot: 3136 × 1448 pixels, captured at a 1600 × 1000
+browser viewport and 2× device scale in light mode. Each sandboxed prototype keeps
+the dashboard's 1280 × 900 simulated viewport and native fit-to-panel behavior.
+
+`examples/capture_readme.py` replays public-library snapshots and artifacts through
+a local read-only browser transport. It does not call a model or modify the source
+exploration. Stores, capability tokens, and private viewer URLs are not published.
+To recapture from the retained demo:
+
+```sh
+uv run python examples/capture_readme.py /path/to/comparison-store \
+  exp_5827a67429044201829d256643bff162 docs/images/possibly-comparison.png
+```
+
+Original artifact SHA-256 values:
+
+- Guided intake: `efd14792d41e6f8b4d2f5cd6299e7a6e957dd983392b39a16614ae1a9e3ab27b`
+- Station board: `c175b8e2db22e5d9a8cc5e75dafe61de35266b05133fbc7f3aa60bd866051ecc`
+
+## Demo brief
+
+Create two meaningfully different complete interactive experiences for Repair
+Together, a fictional repair café. Same scope and sample data: Alex brings a
+wobbly chair, Jo brings a bag with a loose handle, and Sam brings a torn jacket.
+Stations: Welcome, Repair tables, Next steps. Both experiences allow item intake,
+reviewing the item, seeing its assigned next step, and inspecting the station
+board. Change organization and task flow, not only colors or missing features.
+Use cream, plum, mint, and coral, clear labels, and a visible simulated-data notice.
+No network, backend, booking, or safety advice.
+
+## Previous conceptual illustration
 
 `possibly-possibilities.png` was generated with the built-in image generation tool on 2026-09-15 and reviewed for use as conceptual README artwork. It is not a screenshot or a claim about automatic production development. The generated image includes short explanatory labels; these describe possible interface approaches.
 
