@@ -84,3 +84,12 @@ There is no separate repeated screenshot-review execution loop. `artifacts.py`
 provides outcome assertions and allows one browser process to serve isolated checks.
 `finalize_operation` is a public, deterministic checkpoint publication operation.
 It does not repair artifacts or invent missing review evidence.
+
+Dashboard refresh is a single completion-scheduled cycle shared by the native
+document and MCP view. State reads continue at a slower idle cadence so new
+caller work can be discovered, while final diagnostics are retained until the
+operation changes. Hidden views preserve their frame and drafts and pause reads;
+resuming requests one current snapshot. Teardown invalidates pending reads before
+clearing timers, so late results cannot restart polling or redraw a closed view.
+These are presentation scheduling changes; library capabilities, decision receipts,
+grants and generation authority are unchanged.

@@ -89,6 +89,20 @@ Tasks are negotiated yet; native operation handles and deterministic polling are
 explicit. An owned runner may continue after the MCP connection or view closes.
 Use `possibly_stop` and inspect cleanup to stop it.
 
+The review view uses one automatic refresh cycle at a time. It reads active work
+after the preceding cycle completes, slows idle state checks to ten seconds, and
+keeps final operation diagnostics until that operation changes. Progress reuses
+the state snapshot already read by the cycle. A failed read backs off rather than
+queuing retries; none of these reads authorizes generation or resubmits a decision.
+
+Document visibility pauses automatic refresh without unloading the dashboard or
+discarding drafts. Hosts that hide an embedded frame without changing document
+visibility can additionally send the optional boolean host-context extension
+`com.microsoft.amplifier/visibility`. `false` suspends reads; `true` resumes one
+refresh. This is an optional host extension, not a standard MCP field. Other host
+context changes still merge normally. Teardown fences late read completions and
+stops polling; it does not stop tool-owned generation or erase retained work.
+
 ## Portable review view
 
 Tools advertise `_meta.ui.resourceUri: "ui://possibly/review"`, and `resources/read`
