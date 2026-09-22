@@ -79,6 +79,11 @@ experience-quality contracts.
 ### Review context across chat and dashboard
 
 Before responding to a user continuing an exploration, call `review_snapshot`.
+Previewing retained revisions does not require a selection. The dashboard's
+**Review versions** control also reaches completed children of superseded roots;
+unselected workspaces are labeled **Preview · not selected**. A custom presenter
+can save the exact `view_revision_id` and direction `view_id` through
+`save_review_state` without recording a decision or authorizing generation.
 It includes submitted decisions and per-reviewer dashboard views, revision IDs,
 draft text, and save timestamps. Drafts are context, never authorization to generate.
 The browser autosaves feedback as the user types; text whose save failed or is still

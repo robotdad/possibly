@@ -69,6 +69,10 @@ invalidate running work. Brief corrections still invalidate work against the old
 Each workspace follows its latest non-superseded revision unless the reviewer explicitly
 chooses history, and shows feedback against the exact revision reviewed. Feedback remains
 a deterministic decision for the caller; the dashboard does not invent generation grants.
+Review versions also opens unselected directions, including completed children of
+superseded roots. These workspaces are labeled as previews, and browsing never creates
+a select decision. An exact MCP revision entry uses the public retained review/context
+operations; only compatible review entry points advertise an initial App resource.
 Export downloads the exact displayed interactive revision through the public library.
 Dashboard appearance defaults to system preference, with a locally persisted override.
 New generated artifacts are instructed to support system themes unless the brief specifies

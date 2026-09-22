@@ -35,6 +35,11 @@ extra and `possibly-mcp --storage PATH`. Its model-visible tools and portable re
 view use the same public operations, retained IDs and bounded grants. See
 [MCP setup and capability limits](docs/mcp.md); base library/CLI usage does not
 require MCP. The adapter does not expose a public HTTP service or start a browser.
+Open its review resource with `possibly_open_review`, `possibly_get_exploration`,
+or `possibly_get_revision`; other tools are callable without advertising a view.
+An exact revision opens as a preview, including completed children of superseded
+concepts. **Review versions** browses retained history without choosing a direction.
+Viewing is not a selection, lifecycle change, or generation grant.
 
 ## Install and prerequisites
 

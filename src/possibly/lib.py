@@ -822,6 +822,7 @@ class Possibly:
         }
 
     def get_revision(self, exploration_id, revision_id):
+        """Read immutable revision metadata; an MCP App opens this exact revision as a preview, not a selection."""
         rev = self._revision(self.store.get(exploration_id), revision_id)
         return {k: v for k, v in rev.items() if k != "html"}
 
