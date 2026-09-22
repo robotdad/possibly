@@ -105,7 +105,8 @@ stops polling; it does not stop tool-owned generation or erase retained work.
 
 ## Portable review view
 
-Tools advertise `_meta.ui.resourceUri: "ui://possibly/review"`, and `resources/read`
+`possibly_open_review`, `possibly_get_exploration`, and `possibly_get_revision`
+advertise `_meta.ui.resourceUri: "ui://possibly/review"`, and `resources/read`
 returns self-contained `text/html;profile=mcp-app`. Hosts negotiate the standard
 `io.modelcontextprotocol/ui` extension and render it through their normal Apps
 bridge. The HTML bundles the official SDK; end users need neither Node nor a CDN.
@@ -116,12 +117,29 @@ comparison, direction workspaces, version history, feedback/correction, export
 eligibility, provider settings, and appearance controls rather than presenting a
 separate reduced workflow.
 
+Other tools remain discoverable and callable with the same model/App visibility,
+but do not advertise an initial review resource: their results may be operations,
+settings, or artifact bytes rather than a review context.
+
 Before mounting, a host calls `possibly_open_review` and passes that actual result
 to the App. The retained result supplies a review identity: omitting one creates a
 separate view; an existing identity is reused only when the caller explicitly
-chooses it. The App can turn a generic `possibly_get_exploration` initial result
-into a new public attachment before the native controller starts, but that fallback
-cannot recover an opaque remount. Review identity is not an authorization credential.
+chooses it. The App can turn a generic `possibly_get_exploration` or
+`possibly_get_revision` initial result into a new public attachment before the native
+controller starts. A revision result opens that exact version in an independent
+preview, saving only view context through `save_review_state`. It does not select
+the direction, change lifecycle, or authorize generation. Completed children of
+superseded concepts remain viewable through **Review versions**, even if nothing
+has been selected. Unselected workspaces are labeled **Preview · not selected**.
+
+Within a frame, attachment requests retain exact IDs and arguments after uncertain
+responses. Consecutive identical initial results deduplicate; navigating A → B → A
+is new navigation. Tool-result notifications supply no unique host navigation ID,
+so an intentional consecutive identical notification cannot be distinguished from
+replay. Use an explicit `open_review` attachment to disambiguate that intent and
+recover an opaque remount. Reuse its reviewer ID to restore context; omit it for an
+independent view. Review identity is not an authorization credential. Failed or
+unsupported initialization is visible in the native status area.
 
 The view polls only deterministic state/artifact reads. It hydrates displayed
 roots/history with bounded concurrent reads and lazily retrieves a newly opened

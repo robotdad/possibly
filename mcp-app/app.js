@@ -20,8 +20,13 @@ let mediaQuery = null;
 let mediaListener = null;
 let mediaPoll = null;
 let controllerStarted = false;
-const attachmentRequests = new Set();
+let attachmentIntent = null;
 const knownReviewers = new Map();
+let attachmentRequestEpoch = 0;
+
+function attachmentNotice(message) {
+  document.querySelector('#notice').textContent = message;
+}
 
 const requestId = () =>
   Array.from(crypto.getRandomValues(new Uint8Array(16)), value => value.toString(16).padStart(2, '0')).join('');
@@ -100,27 +105,65 @@ function attachmentRequest(value) {
 }
 
 async function requestAttachment(value) {
-  if (value?.operation !== 'get_exploration') return;
+  if (!['get_exploration', 'get_revision'].includes(value?.operation)) {
+    if (!controllerStarted) attachmentNotice('Open a review with possibly_open_review, possibly_get_exploration, or possibly_get_revision.');
+    return;
+  }
   const request = attachmentRequest(value);
-  if (!request) return;
-  const reviewerId = request.reviewer_id || knownReviewers.get(request.exploration_id) || null;
-  const key = `${request.exploration_id}:${reviewerId || 'new'}`;
-  if (attachmentRequests.has(key)) return;
-  attachmentRequests.add(key);
+  if (!request) throw new Error('The review result does not identify its exploration.');
+  const revision = value.operation === 'get_revision' ? value.result : null;
+  if (revision && (typeof revision.id !== 'string' || typeof revision.direction_id !== 'string')) {
+    throw new Error('The review result does not identify its revision and direction.');
+  }
+  // An exact-revision preview gets an independent view; opening it cannot retarget
+  // or overwrite drafts in an already-retained review identity.
+  const reviewerId = revision ? null : request.reviewer_id || knownReviewers.get(request.exploration_id) || null;
+  const key = `${request.exploration_id}:${revision?.id || request.reviewer_id || 'new'}`;
+  // Tool-result notifications carry no unique navigation-event ID. Consecutive
+  // identical results are a retry/delivery duplicate; A -> B -> A is new intent.
+  if (attachmentIntent?.key !== key) {
+    attachmentIntent = {
+      key, epoch: ++attachmentRequestEpoch, inFlight: false, completed: false,
+      openArgs: {
+        exploration_id: request.exploration_id,
+        reviewer_id: reviewerId,
+        request_id: `open-${requestId()}`,
+      },
+      viewRequestId: `view-${requestId()}`,
+      viewArgs: null,
+    };
+  }
+  const intent = attachmentIntent;
+  if (intent.inFlight || intent.completed) return;
+  intent.inFlight = true;
+  const current = () => !tornDown && intent.epoch === attachmentRequestEpoch;
   try {
-    // Compatibility for generic hosts that supplied only get_exploration: the
-    // App still obtains a supported, unique retained identity from the library
-    // before the native controller is allowed to start. Hosts that need opaque
-    // remount recovery supply the retained open_review result themselves.
-    const opened = await tool('open_review', {
-      exploration_id: request.exploration_id,
-      reviewer_id: reviewerId,
-      request_id: `open-${requestId()}`,
-    });
+    // Keep the same request and exact arguments after uncertain transport failure.
+    // A receipt may already be committed even when the App never received it.
+    const opened = await tool('open_review', intent.openArgs);
+    if (!current()) return;
+    if (revision) {
+      const receipt = opened.result.receipt;
+      intent.viewArgs ||= {
+        exploration_id: request.exploration_id,
+        reviewer_id: receipt.reviewer_id,
+        view_id: revision.direction_id,
+        view_revision_id: revision.id,
+        revision_id: revision.id,
+        sequence: receipt.review.sequence + 1,
+        request_id: intent.viewRequestId,
+      };
+      await tool('save_review_state', intent.viewArgs);
+      if (!current()) return;
+    }
+    attachmentNotice('');
     adoptRequestedAttachment(opened);
     startNativeController();
+    intent.completed = true;
+  } catch (cause) {
+    if (current()) attachmentNotice(`Review unavailable. ${cause.message}`);
   } finally {
-    attachmentRequests.delete(key);
+    intent.inFlight = false;
   }
 }
 
@@ -501,13 +544,17 @@ function teardown() {
     try {
       const value = decode(response);
       if (attachmentFrom(value)) {
+        attachmentRequestEpoch += 1;
+        attachmentIntent = null;
+        attachmentNotice('');
         adoptRequestedAttachment(value);
         startNativeController();
       } else {
-        requestAttachment(value).catch(() => {});
+        requestAttachment(value).catch(cause => attachmentNotice(`Review unavailable. ${cause.message}`));
       }
-    } catch {
+    } catch (cause) {
       // A native controller, once started, owns user-visible tool errors.
+      if (!controllerStarted) attachmentNotice(`Review unavailable. ${cause.message}`);
     }
   };
   app.onhostcontextchanged = applyHostContext;

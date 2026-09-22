@@ -36,7 +36,7 @@ def test_sdk_discovery_resource_and_bounded_grant(tmp_path):
             start = next(tool for tool in tools if tool.name == "possibly_start")
             finish = next(tool for tool in tools if tool.name == "possibly_finish")
             stop = next(tool for tool in tools if tool.name == "possibly_stop")
-            assert start.meta["ui"] == {"resourceUri": UI_URI, "visibility": ["model", "app"]}
+            assert start.meta["ui"] == {"visibility": ["model", "app"]}
             assert not start.annotations.destructive_hint
             assert finish.annotations.destructive_hint
             assert stop.annotations.destructive_hint
@@ -83,6 +83,40 @@ def test_sdk_discovery_resource_and_bounded_grant(tmp_path):
             assert repeat["result"]["status"] == "replayed"
             assert repeat["result"]["receipt"] == result["result"]["receipt"]
             assert len(library.intelligence.calls) == 1
+
+    anyio.run(run)
+
+
+def test_only_review_initializers_advertise_ui_without_hiding_other_tools(tmp_path):
+    async def run():
+        library = Possibly(tmp_path, intelligence=FakeIntelligence())
+        async with Client(create_server(library), extensions=[APPS]) as client:
+            tools = {tool.name: tool for tool in (await client.list_tools()).tools}
+            assert len(tools) == 33
+            initializers = {"possibly_open_review", "possibly_get_exploration", "possibly_get_revision"}
+            app_only = {
+                "possibly_configure_provider",
+                "possibly_provider_models",
+                "possibly_test_provider",
+                "possibly_provider_login",
+                "possibly_start_provider_job",
+            }
+            for name, tool in tools.items():
+                if name == "possibly_status":
+                    continue
+                ui = tool.meta["ui"]
+                assert ui["visibility"] == (["app"] if name in app_only else ["model", "app"])
+                assert ui.get("resourceUri") == (UI_URI if name in initializers else None)
+            eid, rid = started(library)
+            revision = await client.call_tool(
+                "possibly_get_revision", {"exploration_id": eid, "revision_id": rid}
+            )
+            assert revision.structured_content["operation"] == "get_revision"
+            assert revision.structured_content["result"]["id"] == rid
+            artifact = await client.call_tool(
+                "possibly_read_artifact", {"exploration_id": eid, "revision_id": rid}
+            )
+            assert artifact.structured_content["result"] == library.read_artifact(eid, rid)
 
     anyio.run(run)
 

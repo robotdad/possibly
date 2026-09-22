@@ -149,6 +149,7 @@ def create_server(client):
         "provider_job",
     }
     apps = Apps()
+    plain_tools = []
 
     def register(name):
         method = getattr(client, name)
@@ -252,23 +253,27 @@ def create_server(client):
             description += " Host presentation only; requires explicit model access and a bounded grant."
         if name in {"make_interactive", "refine", "resume_operation"}:
             description += " May spend model tokens; requires an explicit bounded grant."
-        apps.tool(
-            resource_uri=UI_URI,
-            visibility=["model", "app"]
-            if name
-            not in {
-                "configure_provider",
-                "provider_models",
-                "test_provider",
-                "provider_login",
-                "start_provider_job",
-            }
-            else ["app"],
-            description=description,
-            annotations=ToolAnnotations(
+        visibility = ["model", "app"]
+        if name in {
+            "configure_provider",
+            "provider_models",
+            "test_provider",
+            "provider_login",
+            "start_provider_job",
+        }:
+            visibility = ["app"]
+        options = {
+            "description": description,
+            "annotations": ToolAnnotations(
                 readOnlyHint=name in readonly, destructiveHint=name in {"finish", "stop"}
             ),
-        )(invoke)
+        }
+        if name in {"open_review", "get_exploration", "get_revision"}:
+            apps.tool(resource_uri=UI_URI, visibility=visibility, **options)(invoke)
+        else:
+            # App-visible calls remain callable without claiming their result can
+            # initialize a new review frame (e.g. an artifact string or cleanup).
+            plain_tools.append((invoke, {"ui": {"visibility": visibility}}, options))
 
     for name in operations:
         register(name)
@@ -296,6 +301,8 @@ def create_server(client):
             "The current adapter uses native durable operations, not negotiated MCP Tasks or sampling."
         ),
     )
+    for function, meta, options in plain_tools:
+        server.add_tool(function, meta=meta, **options)
 
     @server.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False))
     def possibly_status() -> dict:
