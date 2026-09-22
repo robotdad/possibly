@@ -234,3 +234,136 @@ def test_native_select_verifies_changed_state(tmp_path):
     assert review["assertions_passed"] == 2
     tools.visual_seen["base"] = digest(tools.candidates["base"])
     tools.submit(result())
+
+
+@pytest.mark.parametrize("method", ["complete", "stream"])
+@pytest.mark.parametrize("model_limit", [3, 4])
+@pytest.mark.parametrize("tool_limit", [6, 7])
+def test_three_concept_budget_includes_submission_and_stops_provider(
+    tmp_path, monkeypatch, method, model_limit, tool_limit
+):
+    async def inspect(html, steps):
+        return {
+            "text": "Claim shift",
+            "errors": [],
+            "blocked_requests": [],
+            "steps_run": steps,
+            "assertions_passed": 0,
+            "screenshot_base64": "AA==",
+        }
+
+    monkeypatch.setattr("possibly.intelligence.inspect_html", inspect)
+    diag = Diagnostics(tmp_path)
+    tools = CandidateTools(tmp_path, tool_limit, diagnostics=diag)
+    mounted = {tool.name: tool for tool in tools.mountables()}
+    requests = []
+
+    class Provider:
+        async def complete(self, request, **kwargs):
+            requests.append(request)
+            return SimpleNamespace(usage={})
+
+        async def stream(self, request, **kwargs):
+            requests.append(request)
+            yield {"usage": {}}
+
+    proxy = ObservedProvider(Provider(), tools, diag, model_limit)
+    request = ChatRequest(messages=[])
+
+    async def model_call():
+        if method == "complete":
+            await proxy.complete(request)
+        else:
+            async for _ in proxy.stream(request):
+                pass
+
+    async def run():
+        await model_call()
+        for name in ("bounded", "autopage", "linked"):
+            assert (await mounted["write_candidate"].execute({"name": name, "html": HTML})).success
+        await model_call()
+        for name in tools.candidates:
+            assert (await mounted["inspect_candidate"].execute({"name": name})).success
+        await model_call()  # Deliver the three screenshots before terminal submission.
+        submission = {"brief": {"intent": "Compare task approaches"}, "directions": []}
+        for name in tools.candidates:
+            direction = design(1)["directions"][0]
+            direction.pop("html")
+            direction.update(name=name, candidate=name)
+            submission["directions"].append(direction)
+        if tool_limit == 7:
+            assert (await mounted["submit_result"].execute(submission)).success
+            with pytest.raises(SubmissionComplete):
+                await model_call()
+            return
+        with pytest.raises(PossiblyError) as failure:
+            await mounted["submit_result"].execute(submission)
+        assert failure.value.code == "tool_budget_exhausted"
+        with pytest.raises(PossiblyError) as rejected:
+            await mounted["write_candidate"].execute({"name": "must-not-write", "html": HTML})
+        assert rejected.value is failure.value
+        for _ in range(2):
+            with pytest.raises(PossiblyError) as later:
+                await model_call()
+            assert later.value is failure.value
+
+    asyncio.run(run())
+    assert len(requests) == len(diag.data["provider_calls"]) == 3
+    checkpoint = read_checkpoint(tmp_path)
+    assert bool(checkpoint["result"]) == (tool_limit == 7)
+    assert set(checkpoint["candidates"]) == {"bounded", "autopage", "linked"}
+    assert len(checkpoint["reviews"]) == len(checkpoint["visual_seen"]) == 3
+    for record in (checkpoint, diag.data):
+        assert record["tool_calls_admitted"] == tool_limit
+        assert record["tool_calls"] == record["tool_calls_attempted"] == (8 if tool_limit == 6 else 7)
+    assert not (tmp_path / "must-not-write.html").exists()
+
+
+def test_terminal_submission_uses_last_tool_admission(tmp_path):
+    tools = CandidateTools(tmp_path, 1)
+    submit = next(tool for tool in tools.mountables() if tool.name == "submit_result")
+    response = asyncio.run(
+        submit.execute({"question": {"prompt": "Which task?", "why_needed": "Unknown intent"}})
+    )
+    assert response.success
+    assert tools.calls == tools.attempts == 1
+    with pytest.raises(SubmissionComplete):
+        asyncio.run(submit.execute({"question": {"prompt": "duplicate"}}))
+    assert tools.calls == tools.attempts == 1
+
+
+def test_model_budget_failure_prevents_tool_admission_and_keeps_first_error(tmp_path):
+    tools = CandidateTools(tmp_path, 1)
+    diag = Diagnostics(tmp_path)
+
+    class Provider:
+        async def complete(self, request, **kwargs):
+            return SimpleNamespace(usage={})
+
+    proxy = ObservedProvider(Provider(), tools, diag, 1)
+    request = ChatRequest(messages=[])
+    asyncio.run(proxy.complete(request))
+    with pytest.raises(PossiblyError) as first:
+        asyncio.run(proxy.complete(request))
+    assert first.value.code == "model_call_budget_exhausted"
+    write = next(tool for tool in tools.mountables() if tool.name == "write_candidate")
+    with pytest.raises(PossiblyError) as rejected:
+        asyncio.run(write.execute({"name": "denied", "html": HTML}))
+    assert rejected.value is first.value
+    assert tools.calls == 0 and tools.attempts == 1
+    assert not tools.candidates
+
+
+def test_legacy_diagnostics_do_not_invent_admission_counts(tmp_path):
+    client = Possibly(tmp_path / "store", intelligence=FakeIntelligence())
+    receipt = client.start("A garden watering app", request_id="start", grant=Grant())
+    eid, oid = receipt["receipt"]["exploration_id"], receipt["receipt"]["operation_id"]
+    legacy = {"tool_calls": 8, "status": "incomplete"}
+    with client.store.transaction() as db:
+        state = client.store.get(eid, db)
+        state["operations"][oid]["diagnostics"] = legacy
+        client.store.put(db, state)
+    assert client.operation_diagnostics(eid, oid)["diagnostics"] == legacy
+    checkpoint = {"schema": 1, "result": None, "tool_calls": 8}
+    save_checkpoint(tmp_path, checkpoint)
+    assert read_checkpoint(tmp_path) == checkpoint
