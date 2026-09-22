@@ -107,6 +107,11 @@ provider-boundary call records, model names when exposed, numeric usage, artifac
 sizes, and cache hits. It contains no raw prompts or credential values. Provider-internal
 HTTP retries are included in call duration, not counted separately. Usage is available
 only when the provider returns it; missing usage is not zero consumption.
+New diagnostics/checkpoints label `tool_calls_attempted` and `tool_calls_admitted`;
+`tool_calls` preserves the legacy attempted-call count. The grant is enforced against
+admissions: a rejected attempt does not consume another execution. An admitted call
+still counts when validation fails. Older records lack explicit admission counts;
+these cannot be inferred from attempts and are not invented or rewritten on read.
 
 Refinements preload `base` and support exact-match `patch_candidate` edits guarded by
 a SHA-256 hash. Unchanged writes preserve checks; changed bytes invalidate them.
@@ -117,6 +122,11 @@ A single Chromium process is reused per operation, with isolated contexts per ch
 Screenshots enter the next provider request in the same agent execution. Accepted
 submission short-circuits further calls. `Grant.max_model_calls` defaults to 12 per
 submission; the overall timeout still bounds provider retries.
+`max_tool_calls` includes `submit_result`: three concepts need at least seven calls
+(three writes, three inspections, one submission), before reads, edits or retries.
+The first terminal budget failure is retained and blocks further provider requests
+and tool admissions. Unused engine submissions (`max_turns`) do not automatically
+recover failed work or increase its grant.
 
 Checkpoints live in `STORE/operations/OPERATION_ID/TURN/`, alongside sanitized diagnostics.
 They are retained with the rest of the exploration. No automatic cleanup/expiry is added.

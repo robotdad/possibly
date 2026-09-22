@@ -429,6 +429,8 @@ class Possibly:
         """Explore context and/or materials: {name, content} or {name, reference, required?}.
 
         References are read only by an explicitly bound host material_resolver callable.
+        Each concept needs at least a write and inspection; submit_result also consumes
+        one tool call. Three concepts therefore need at least seven admitted tool calls.
         """
         g = asdict(grant) if isinstance(grant, Grant) else copy.deepcopy(grant)
         p = (
@@ -1350,7 +1352,13 @@ class Possibly:
         )
 
     def operation_diagnostics(self, exploration_id, operation_id):
-        """Read stage times and provider call usage without prompts or credentials, including live progress."""
+        """Read live stage times and provider usage without prompts or credentials.
+
+        tool_calls_attempted includes rejected attempts; tool_calls_admitted counts
+        admitted executions (including failed validation and submit_result). tool_calls
+        preserves the legacy attempted-call count. Older records do not identify how
+        many attempts were admitted.
+        """
         state = self.store.get(exploration_id)
         op = state["operations"].get(operation_id)
         if not op:

@@ -33,6 +33,8 @@ class ObservedProvider:
         return value
 
     def prepare(self, request):
+        if self.candidates.runtime_failure is not None:
+            raise self.candidates.runtime_failure
         if self.candidates.result is not None:
             raise SubmissionComplete()
         records = self.diagnostics.data["provider_calls"]

@@ -76,6 +76,7 @@ A candidate must have been written and inspected. Do not claim human review or s
 class CandidateTools:
     def __init__(self, root, max_calls, *, request=None, diagnostics=None, browser=None):
         self.root, self.max_calls, self.calls = Path(root), max_calls, 0
+        self.attempts = 0
         self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.candidates, self.reviews, self.visual_seen = {}, {}, {}
         self.result = None
@@ -104,20 +105,33 @@ class CandidateTools:
             "visual_seen": self.visual_seen,
             "result": self.result,
             "required_flows": self.required_flows,
-            "tool_calls": self.calls,
+            **self.call_counts(),
         }
         save_checkpoint(self.root, data)
         return data
 
+    def call_counts(self):
+        return {
+            "tool_calls": self.attempts,  # Preserve the legacy attempted-call counter.
+            "tool_calls_admitted": self.calls,
+            "tool_calls_attempted": self.attempts,
+        }
+
     def consume(self):
         if self.result is not None:
             raise SubmissionComplete()
-        self.calls += 1
-        self.checkpoint()
-        if self.calls > self.max_calls:
+        self.attempts += 1
+        if self.runtime_failure is None and self.calls >= self.max_calls:
             self.runtime_failure = PossiblyError(
                 "tool_budget_exhausted", "The operation exhausted its tool-call allowance."
             )
+        if self.runtime_failure is None:
+            self.calls += 1
+        self.checkpoint()
+        if self.diagnostics:
+            self.diagnostics.data.update(self.call_counts())
+            self.diagnostics.flush()
+        if self.runtime_failure is not None:
             raise self.runtime_failure
 
     def write(self, name, html):
@@ -745,6 +759,8 @@ class AmplifierIntelligence:
                     "prompt": SYSTEM + "\nINPUT DATA:\n" + json.dumps(model_request),
                 }
             )
+            if candidates.runtime_failure is not None:
+                raise candidates.runtime_failure
             if candidates.result is None:
                 raise PossiblyError("invalid_model_result", "Agent did not submit a validated result.")
             if "question" in candidates.result:
@@ -773,6 +789,6 @@ class AmplifierIntelligence:
             return result
         finally:
             diagnostics.data["status"] = "submitted" if candidates.result else "incomplete"
-            diagnostics.data["tool_calls"] = candidates.calls
+            diagnostics.data.update(candidates.call_counts())
             diagnostics.flush()
             await engine.shutdown()

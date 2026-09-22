@@ -146,3 +146,9 @@ use configured providers and upstream defaults; specific model IDs should be pin
 by callers when reproducibility matters. Model settings are not written to a user
 configuration file. Non-secret model provenance and the authorized batch plan are
 retained as part of the exploration's reproducibility record.
+
+Provider-call limits apply per engine submission, including screenshot review. A
+terminal tool-budget failure stops further provider requests and preserves its
+original error even if the model-call allowance is also exhausted. `submit_result`
+uses the tool allowance; reserve it when choosing an explicit grant. No allowance
+is increased automatically, and provider-internal retries remain timeout-bounded.

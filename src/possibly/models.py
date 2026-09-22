@@ -22,7 +22,8 @@ class Grant:
 
     max_turns bounds engine submissions including answers and repair attempts;
     timeout_seconds bounds cumulative execution time, including preparation/tools.
-    max_tool_calls bounds tool executions in each engine submission.
+    max_tool_calls bounds admitted tool executions, including submit_result, per submission.
+    Rejected attempts are counted separately; terminal budget failure stops further calls.
     max_model_calls bounds provider requests, including visual feedback, per submission.
     Provider-internal HTTP retries remain subject to the overall timeout.
     """

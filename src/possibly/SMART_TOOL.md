@@ -127,7 +127,13 @@ new model work. Old HTML-only partials cannot be silently promoted to completed 
 - An interrupted provider call may have consumed tokens. Recovery is explicit and
   requires a fresh grant; it cannot guarantee exactly-once provider spending.
 - max_turns bounds engine submissions; timeout_seconds bounds cumulative running time;
-  max_tool_calls bounds tool executions per submission. These are not dollar/token caps.
+  max_model_calls bounds provider requests per submission, including visual review;
+  max_tool_calls bounds admitted tool executions, including terminal submit_result.
+  Three concepts need at least seven tool calls (three writes, three inspections,
+  one submission), before any reads, edits or retries. These are not dollar/token caps.
+  Terminal budget failure stops further model requests; unused turns do not repair it.
+  Diagnostics distinguish tool_calls_attempted from tool_calls_admitted; tool_calls
+  preserves the legacy attempted-call count. Old records cannot establish admissions.
 - This first release supports local single-host stores. Do not expose its loopback
   dashboard to a network or share a store between unrelated trust domains.
 - Visual quality and preservation require human evaluation. Mechanical checks do not

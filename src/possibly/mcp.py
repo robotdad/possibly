@@ -46,7 +46,12 @@ def create_server(client):
         actions: list[Literal["explore", "make_interactive", "refine"]] = Field(min_length=1)
         max_turns: int = Field(default=4, ge=1, le=20)
         timeout_seconds: int = Field(default=300, ge=1, le=3600)
-        max_tool_calls: int = Field(default=20, ge=1, le=100)
+        max_tool_calls: int = Field(
+            default=20,
+            ge=1,
+            le=100,
+            description="Admitted tool executions per submission, including submit_result; three concepts need at least seven calls.",
+        )
         max_model_calls: int = Field(default=12, ge=1, le=100)
         prototype_after_selection: bool = False
         expires_at: float | None = None
