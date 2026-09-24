@@ -40,6 +40,9 @@ or `possibly_get_revision`; other tools are callable without advertising a view.
 An exact revision opens as a preview, including completed children of superseded
 concepts. **Review versions** browses retained history without choosing a direction.
 Viewing is not a selection, lifecycle change, or generation grant.
+An explicit `possibly_open_review` attachment includes an optional retained-review
+identity. Pass its `reviewer_id` to reopen that view; omit it for an independent
+review. Hosts must keep independent reviewers, drafts and exact previews separate.
 
 ## Install and prerequisites
 

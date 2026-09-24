@@ -27,6 +27,11 @@ No resolver means no implicit URL/file access.
 Use `capabilities()` and capability help
 for exact signatures. Library calls are synchronous; async hosts can use a worker thread.
 
+For MCP review reuse, retain the `reviewer_id` returned by `possibly_open_review`
+and supply it when reopening. Omitting it creates an independent review with its
+own drafts. Exact-revision previews do not retarget an existing retained review.
+See [MCP host identity](mcp.md) for the optional dashboard metadata.
+
 ## Model access and browser setup
 
 Provider requests and login require explicit `allow_environment=True` / `--model-env`; settings reads expose presence only.

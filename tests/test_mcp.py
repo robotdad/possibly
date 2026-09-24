@@ -308,6 +308,13 @@ def test_mcp_read_changes_redacts_private_presentation_event_url_in_both_outputs
 
 
 def test_cleanup_failure_is_visible_with_retained_receipt(tmp_path, monkeypatch):
+    # Error results must not request presentation identity, even if a future
+    # adapter supports more receipt-producing methods than open_review.
+    def no_failed_presentation(*args):
+        raise AssertionError("Failed cleanup must not identify a successful presentation")
+
+    monkeypatch.setattr("possibly.mcp.presentation_meta", no_failed_presentation)
+
     async def run():
         library = Possibly(tmp_path, intelligence=FakeIntelligence())
         eid, _ = started(library)
@@ -322,6 +329,7 @@ def test_cleanup_failure_is_visible_with_retained_receipt(tmp_path, monkeypatch)
         async with Client(create_server(library)) as client:
             result = await client.call_tool("possibly_stop", {"exploration_id": eid, "request_id": "stop"})
             assert result.is_error
+            assert not (result.meta or {}).get("amplifier/presentationId")
             assert result.structured_content["error"]["code"] == "cleanup_incomplete"
             assert result.structured_content["result"]["receipt"]["exploration_id"] == eid
             assert library.get_exploration(eid)["lifecycle"] == "stopped"
@@ -413,3 +421,68 @@ def test_review_attachment_persists_exact_pending_intent_and_typed_config_reject
             assert invalid.structured_content["error"]["code"] == "invalid_settings"
 
     anyio.run(run)
+
+
+def test_explicit_dashboard_identity_preserves_independent_reviewers(tmp_path):
+    from possibly.mcp import presentation_meta
+
+    async def run():
+        library = Possibly(tmp_path, intelligence=FakeIntelligence())
+        eid, rid = started(library)
+        async with Client(create_server(library), extensions=[APPS]) as client:
+            first = await client.call_tool(
+                "possibly_open_review", {"exploration_id": eid, "request_id": "first"}
+            )
+            reviewer = payload(first)["result"]["receipt"]["reviewer_id"]
+            saved = await client.call_tool(
+                "possibly_save_review_state",
+                {
+                    "exploration_id": eid,
+                    "reviewer_id": reviewer,
+                    "draft": "Keep my unfinished review",
+                    "request_id": "save-draft",
+                    "sequence": 1,
+                },
+            )
+            assert not saved.is_error
+            reopened = await client.call_tool(
+                "possibly_open_review",
+                {"exploration_id": eid, "reviewer_id": reviewer, "request_id": "reopen"},
+            )
+            independent = await client.call_tool(
+                "possibly_open_review", {"exploration_id": eid, "request_id": "independent"}
+            )
+            assert not first.is_error and not reopened.is_error and not independent.is_error
+            assert first.meta["amplifier/presentationId"] == reopened.meta["amplifier/presentationId"]
+            assert first.meta["amplifier/presentationId"] != independent.meta["amplifier/presentationId"]
+            reviews = library.review_snapshot(eid)["reviews"]
+            assert len(reviews) == 2
+            assert reviews[reviewer]["drafts"]["overall"] == "Keep my unfinished review"
+            independent_reviewer = payload(independent)["result"]["receipt"]["reviewer_id"]
+            assert reviews[independent_reviewer]["drafts"] == {}
+            for name, args in [
+                ("possibly_get_exploration", {"exploration_id": eid}),
+                ("possibly_get_revision", {"exploration_id": eid, "revision_id": rid}),
+                ("possibly_status", {}),
+            ]:
+                result = await client.call_tool(name, args)
+                assert not result.is_error
+                assert not (result.meta or {}).get("amplifier/presentationId")
+            rejected = await client.call_tool(
+                "possibly_open_review", {"exploration_id": "missing", "request_id": "rejected"}
+            )
+            assert rejected.is_error and not (rejected.meta or {}).get("amplifier/presentationId")
+            assert len(library.intelligence.calls) == 1  # Only deterministic seeded fake work.
+
+    anyio.run(run)
+
+    def identity(eid, reviewer):
+        return presentation_meta(
+            "open_review", {}, {"receipt": {"attachment": {"exploration_id": eid, "reviewer_id": reviewer}}}
+        )
+
+    assert identity("first", "same") != identity("second", "same")
+    assert identity("a:b", "c") != identity("a", "b:c")
+    assert len(identity("a", "x" * 200)["amplifier/presentationId"]) <= 200
+    assert presentation_meta("open_review", {}, {"id": "provider-job"}) is None
+    assert presentation_meta("open_review", {}, {"receipt": {"attachment": {"exploration_id": "a"}}}) is None
