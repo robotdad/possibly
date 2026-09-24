@@ -5,6 +5,7 @@ host owns access control. Closing the transport does not cancel an owned runner.
 """
 
 import argparse
+import hashlib
 import inspect
 import json
 import sys
@@ -31,6 +32,23 @@ def public_result(value, path=()):
     if isinstance(value, (list, tuple)):
         return [public_result(item, path) for item in value]
     return value
+
+
+def presentation_meta(name, arguments, result):
+    """Identify an explicit retained review, never merge independent reviewers."""
+    if name != "open_review" or not isinstance(result, dict):
+        return None
+    receipt = result.get("receipt")
+    attachment = receipt.get("attachment") if isinstance(receipt, dict) else None
+    if not isinstance(attachment, dict):
+        return None
+    pair = [attachment.get("exploration_id"), attachment.get("reviewer_id")]
+    if not all(isinstance(value, str) and value for value in pair):
+        return None
+    # Length bounded and unambiguous even for user-supplied reviewer IDs. The
+    # identity is scoped to this tool/store by the host, not a permission grant.
+    digest = hashlib.sha256(json.dumps(pair, separators=(",", ":")).encode()).hexdigest()
+    return {"amplifier/presentationId": "possibly:review:" + digest}
 
 
 def create_server(client):
@@ -236,6 +254,7 @@ def create_server(client):
                 return CallToolResult(
                     content=[TextContent(type="text", text=json.dumps(payload, ensure_ascii=False))],
                     structuredContent=payload,
+                    _meta=presentation_meta(name, arguments, result),
                     isError=cleanup_failed,
                 )
             except PossiblyError as error:

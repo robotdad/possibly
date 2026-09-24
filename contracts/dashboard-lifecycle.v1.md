@@ -175,6 +175,17 @@ Each currently reads **Can't check**, not passed.
   current workspace, outgoing draft, accepted-but-unacknowledged retry, or opaque
   prototype preview.
 
+## Host dashboard identity
+
+Successful `possibly_open_review` results identify the retained review using the
+optional `_meta["amplifier/presentationId"]` value `possibly:review:<sha256>`, derived
+from the returned exploration and reviewer IDs. Reopening with the same
+`reviewer_id` lets hosts reuse that review; omitting it creates an independent
+review and therefore a different identity. Exact-revision previews and generic
+exploration reads do not claim a retained reviewer identity. Hosts must preserve
+each review's drafts and history. The hint neither opens a viewer nor grants
+model or tool authority.
+
 ## Reserved / open questions (NOT frozen)
 
 - How are explicit finish and declared done conditions represented, and how are

@@ -195,3 +195,12 @@ isolation. MCP tests cover stdio reconnect, schema limits, retry receipts, stale
 conflicts, lifecycle retention and provider-free behavior. Tests use scripted
 intelligence and spend no model tokens. They do not certify live provider or
 Chromium generation quality.
+
+Successful `possibly_open_review` results identify the retained review using the
+optional `_meta["amplifier/presentationId"]` value `possibly:review:<sha256>`, derived
+from the returned exploration and reviewer IDs. Reopening with the same
+`reviewer_id` lets hosts reuse that review; omitting it creates an independent
+review and therefore a different identity. Exact-revision previews and generic
+exploration reads do not claim a retained reviewer identity. Hosts must preserve
+each review's drafts and history. The hint neither opens a viewer nor grants
+model or tool authority.
