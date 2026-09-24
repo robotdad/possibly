@@ -308,6 +308,13 @@ def test_mcp_read_changes_redacts_private_presentation_event_url_in_both_outputs
 
 
 def test_cleanup_failure_is_visible_with_retained_receipt(tmp_path, monkeypatch):
+    # Error results must not request presentation identity, even if a future
+    # adapter supports more receipt-producing methods than open_review.
+    def no_failed_presentation(*args):
+        raise AssertionError("Failed cleanup must not identify a successful presentation")
+
+    monkeypatch.setattr("possibly.mcp.presentation_meta", no_failed_presentation)
+
     async def run():
         library = Possibly(tmp_path, intelligence=FakeIntelligence())
         eid, _ = started(library)
@@ -322,6 +329,7 @@ def test_cleanup_failure_is_visible_with_retained_receipt(tmp_path, monkeypatch)
         async with Client(create_server(library)) as client:
             result = await client.call_tool("possibly_stop", {"exploration_id": eid, "request_id": "stop"})
             assert result.is_error
+            assert not (result.meta or {}).get("amplifier/presentationId")
             assert result.structured_content["error"]["code"] == "cleanup_incomplete"
             assert result.structured_content["result"]["receipt"]["exploration_id"] == eid
             assert library.get_exploration(eid)["lifecycle"] == "stopped"

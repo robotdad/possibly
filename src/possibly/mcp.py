@@ -254,7 +254,7 @@ def create_server(client):
                 return CallToolResult(
                     content=[TextContent(type="text", text=json.dumps(payload, ensure_ascii=False))],
                     structuredContent=payload,
-                    _meta=presentation_meta(name, arguments, result),
+                    _meta=None if cleanup_failed else presentation_meta(name, arguments, result),
                     isError=cleanup_failed,
                 )
             except PossiblyError as error:
